@@ -1,1 +1,0 @@
-# physical_ai_mujoco_internship
