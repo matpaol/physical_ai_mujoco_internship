@@ -1,0 +1,8 @@
+{
+  "name": "6 · Sim2real con ROS 2",
+  "available": false,
+  "description": "Richiede sensori, robot reali e adapter ROS 2.",
+  "default_decider": "ppo",
+  "operations": [],
+  "env_overrides": {}
+}

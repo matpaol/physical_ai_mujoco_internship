@@ -1,0 +1,8 @@
+{
+  "name": "4 · Belief calibrato (futuro)",
+  "available": false,
+  "description": "Richiede un modello calibrato di incertezza.",
+  "default_decider": "ppo",
+  "operations": [],
+  "env_overrides": {}
+}

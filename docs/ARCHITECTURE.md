@@ -139,3 +139,13 @@ seconda implementazione prevista nella fase immediatamente successiva.
 Non si progettano ora belief, grasp, traiettorie, messaggi ROS 2 o gerarchie
 per DLO. Verranno introdotti quando la rispettiva idealizzazione sara rimossa.
 
+
+
+## Implementazione della prima migrazione
+
+La descrizione concreta, i percorsi pubblici, le compatibilita e le verifiche
+sono in [RESTRUCTURING.md](RESTRUCTURING.md). `envs` e il package dell'Environment.
+La voce 7 del menu sceglie i profili `configs/experiments/`: i numeri di fase
+rimangono nei dati e nella presentazione. `ExactObserver` restituisce Observation,
+mentre `privileged_state` fornisce separatamente PrivilegedState per supervisione.
+La cattura stereo grezza non viene presentata come ricostruzione percettiva.

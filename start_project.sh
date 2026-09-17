@@ -61,7 +61,7 @@ conda activate "$ENV_NAME" || return 1
 cd "$PROJECT_ROOT" || return 1
 
 printf 'Installing the project from %s...\n' "$PROJECT_ROOT"
-python -m pip install -e ".[test]" || return 1
+python -m pip install -e ".[test,train,video]" || return 1
 
 PROJECT_PYTHON="$(python -c 'import sys; print(sys.executable)')"
 VSCODE_SETTINGS="$PROJECT_ROOT/.vscode/settings.json"

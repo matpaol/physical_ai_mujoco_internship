@@ -1,0 +1,8 @@
+{
+  "name": "2 · UR5 simulato",
+  "available": false,
+  "description": "Richiede manipolatore e policy di esecuzione; include il gate stereo con braccio.",
+  "default_decider": "ppo",
+  "operations": [],
+  "env_overrides": {}
+}

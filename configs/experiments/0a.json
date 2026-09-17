@@ -1,0 +1,16 @@
+{
+  "name": "0A · Generazione della scena",
+  "available": true,
+  "description": "Mondo simulato, senza ciclo decisionale.",
+  "default_decider": "random",
+  "operations": [
+    "6",
+    "5"
+  ],
+  "env_overrides": {
+    "components": {
+      "observer": "exact",
+      "executor": "ideal_removal"
+    }
+  }
+}

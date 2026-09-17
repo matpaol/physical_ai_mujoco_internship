@@ -16,10 +16,15 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
+train = ["stable-baselines3>=2.4"]
+video = ["imageio-ffmpeg>=0.4"]
 
 [tool.setuptools.packages.find]
-include = ["physical_ai_mujoco*"]
+include = ["physical_ai_mujoco*", "scripts*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+
+[project.scripts]
+physical-ai = "physical_ai_mujoco.ui.menu:main"

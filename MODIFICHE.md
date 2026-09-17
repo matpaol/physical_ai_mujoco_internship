@@ -58,6 +58,64 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-17 16:19:10 — Prima migrazione modulare a oggetti
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Separati contracts, observe, decide, execute e task; costruzione scene
+in SceneSession e visualizzazione in SimulationViewer. Environment Gymnasium
+ridotto al coordinamento. Menu in ui, script mantenuti come ingressi compatibili,
+training e valutazione nei rispettivi package. Voce 7 per selezionare profili
+in configurazione, con fasi future esplicitamente non disponibili.
+
+**Perché:** TargetExtractionEnv aveva 944 righe e mescolava simulazione, task,
+percezione e viewer. Le policy leggevano il simulatore e campi privati. Matteo
+richiede componenti a oggetti sostituibili durante la de-idealizzazione.
+
+**File:** physical_ai_mujoco/, scripts/, main.py, configs/experiments/, docs/, tests/.
+
+**Verifica:** 60 episodi comparati prima/dopo identici e tre scene 0A identiche;
+52 test completi con grafica nell'ambiente mujoco-tirocinio; otto prove fisiche;
+viewer con due episodi, GIF, modello PPO esistente e breve training completo.
+Dettagli e versioni in docs/RESTRUCTURING.md e docs/validation/.
+
+## 2026-09-17 16:19:10 — Ripristino completo di visibilita e contabilita del task
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Snapshot MuJoCo include RGBA. Lo snapshot pubblico dell'episodio
+comprende riferimento del disturbo, totale e memoria dei crolli. La ricerca
+esaustiva usa questa API e conserva separatamente il contatore TimeLimit.
+
+**Perché:** Rimuovere un oggetto azzerava alpha, che il ripristino non recuperava.
+La ricerca ripristinava pose e disturbo ma ometteva ever_collapsed, permettendo
+che un ramo influenzasse il successivo. Sono difetti del ripristino, non nuove
+regole fisiche o nuovi criteri di ricompensa.
+
+**File:** simulation/simulator.py, task/, envs/target_extraction.py,
+evaluation/exhaustive.py, tests/test_architecture.py.
+
+**Verifica:** Test dedicati su visibilita dopo ripristino e pool, memoria dei
+crolli dopo rollback e ricerca esaustiva operativa su due scene a tre oggetti.
+
+## 2026-09-17 16:19:10 — Installazione e provenienza degli esperimenti
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Extra train/video in pyproject, requirements e start_project allineati;
+metadati del training con input, versioni, commit/hash, seed e risultati. PPO
+segnala dimensioni incompatibili. README aggiornato e precedenti guide archiviate.
+
+**Perché:** Stable-Baselines3 mancava dalle dipendenze, il modello non conservava
+la configurazione completa e la documentazione non corrispondeva al menu o alla
+terminazione attuale. La dichiarazione di test su scene mai viste non era
+supportata da una separazione esplicita dei seed.
+
+**Verifica:** Breve training, valutazione e salvataggio artefatti nell'ambiente
+mujoco-tirocinio; caricamento del modello preesistente; controllo dimensionale
+PPO e apertura del menu. Lo split scientifico train/test resta da progettare.
+
+
 ## 2026-09-17 08:23:59 — Si puo' guardare la policy allenata mentre agisce
 
 **Chi:** Claude (claude-opus-5), su richiesta di Matteo Paolini

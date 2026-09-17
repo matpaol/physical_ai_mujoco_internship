@@ -259,6 +259,7 @@ class Simulator:
             "contype": self.model.geom_contype.copy(),
             "conaffinity": self.model.geom_conaffinity.copy(),
             "removed": set(self._removed),
+            "rgba": self.model.geom_rgba.copy(),
         }
 
     def restore(self, snapshot: dict) -> None:
@@ -275,6 +276,8 @@ class Simulator:
         self.model.geom_contype[:] = snapshot["contype"]
         self.model.geom_conaffinity[:] = snapshot["conaffinity"]
         self._removed = set(snapshot["removed"])
+        if "rgba" in snapshot:
+            self.model.geom_rgba[:] = snapshot["rgba"]
         mujoco.mj_forward(self.model, self.data)
 
     def reset(self) -> None:

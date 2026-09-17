@@ -1,296 +1,124 @@
 # Physical AI con MuJoCo
 
-Repository del progetto di tirocinio dedicato a **MuJoCo**, simulazione fisica, reinforcement learning e studio dei DLO (*Deformable Linear Objects*).
+Banco di prova sim2real per scegliere l'ordine di rimozione di oggetti da un
+mucchio, raggiungere un target e misurare il disturbo provocato agli altri.
+Il progetto cresce per de-idealizzazione: prima decisioni con stato esatto e
+rimozione ideale, poi percezione stereo, robustezza, UR5 simulato e sistema reale.
 
-Questo README contiene soprattutto un promemoria pratico per sincronizzare il progetto tra:
+## Avvio
 
-- Mac con Visual Studio Code;
-- GitHub;
-- PC Linux del tirocinio;
-- eventualmente Google Colab.
-
-## Regola fondamentale
-
-Prima di iniziare a lavorare:
+Dalla cartella del progetto, nell'ambiente Conda gia usato:
 
 ```bash
-git pull
-```
-
-Dopo aver modificato i file:
-
-```bash
-git add .
-git commit -m "Descrizione breve delle modifiche"
-git push
-```
-
-Il flusso è quindi:
-
-```text
-git pull → modifica i file → git add → git commit → git push
-```
-
-## Struttura prevista
-
-```text
-physical-ai-mujoco/
-├── README.md
-├── environment.yml
-├── requirements.txt
-├── test_1_mujoco_base/
-├── test_2_pallina_bicchieri/
-├── test_3_dyndlo/
-├── notebooks/
-└── docs/
-```
-
-L'ambiente Conda, Miniforge, cache, password, token e file molto pesanti non devono essere caricati nel repository.
-
-## 1. Prima configurazione sul Mac
-
-Questi passaggi si eseguono una volta sola.
-
-### Verificare Git
-
-Aprire il terminale del Mac e digitare:
-
-```bash
-git --version
-```
-
-### Configurare nome ed email
-
-```bash
-git config --global user.name "Matteo"
-git config --global user.email "LA-TUA-EMAIL-GITHUB"
-```
-
-### Scaricare il repository
-
-Sostituire `TUO-USERNAME` con il proprio username GitHub:
-
-```bash
-cd ~/Documents
-git clone https://github.com/TUO-USERNAME/physical-ai-mujoco.git
-cd physical-ai-mujoco
-```
-
-### Aprire il progetto in VS Code
-
-```bash
-code .
-```
-
-Se il comando `code` non è disponibile, aprire VS Code e selezionare **File → Open Folder**, quindi scegliere la cartella `physical-ai-mujoco`.
-
-## 2. Prima configurazione sul PC Linux
-
-Questi passaggi si eseguono una volta sola.
-
-### Verificare Git
-
-```bash
-git --version
-```
-
-### Configurare nome ed email
-
-```bash
-git config --global user.name "Matteo"
-git config --global user.email "LA-TUA-EMAIL-GITHUB"
-```
-
-### Scaricare il repository
-
-```bash
-cd /home/matteo
-git clone https://github.com/TUO-USERNAME/physical-ai-mujoco.git
-cd physical-ai-mujoco
-```
-
-Se esiste già una vecchia cartella locale con gli esperimenti, non copiarla alla cieca sopra il repository: spostare soltanto i singoli file necessari dopo aver eseguito il clone.
-
-## 3. Routine quotidiana in VS Code
-
-Nel terminale integrato di VS Code, verificare innanzitutto di trovarsi nella cartella del progetto:
-
-```bash
-pwd
-git status
-```
-
-### Prima di modificare i file
-
-```bash
-git pull
-```
-
-### Dopo le modifiche
-
-Controllare cosa è cambiato:
-
-```bash
-git status
-git diff
-```
-
-Preparare i file per il commit:
-
-```bash
-git add .
-```
-
-Creare il commit:
-
-```bash
-git commit -m "Aggiunge test di caduta della pallina"
-```
-
-Caricare il commit su GitHub:
-
-```bash
-git push
-```
-
-### Controllare la cronologia
-
-```bash
-git log --oneline --max-count=10
-```
-
-## 4. Passare dal Mac al PC Linux
-
-Sul Mac, dopo aver terminato le modifiche:
-
-```bash
-git add .
-git commit -m "Aggiorna esperimento MuJoCo"
-git push
-```
-
-Sul PC Linux, prima di eseguire il codice:
-
-```bash
-cd /home/matteo/physical-ai-mujoco
-git pull
 conda activate mujoco-tirocinio
+python main.py
 ```
 
-Esempio di esecuzione:
+La voce **7** seleziona la fase/configurazione: 0A, 0B e il prototipo 1A sono
+utilizzabili; le fasi successive sono visibili come "da sviluppare". Il menu
+mostra le operazioni del profilo selezionato. Per allenare PPO, scegli 1A e
+poi la voce 3. Il profilo iniziale e 0B.
+
+I profili vivono in `configs/experiments/`: selezionano i componenti nel builder.
+Anche i processi avviati dal menu ereditano la selezione. Le librerie scientifiche
+non leggono nomi o numeri delle fasi. La fase 3 e assorbita da 1B e 2.
+`main.py` si puo ancora avviare dal pulsante Run di VS Code.
+
+Per una nuova installazione (Python >= 3.10):
 
 ```bash
-python test_1_mujoco_base/test_caduta.py
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[test,train,video]"
+python main.py
 ```
 
-## 5. Passare dal PC Linux al Mac
+Anche `python -m pip install -r requirements.txt` usa le stesse dipendenze.
+`train` installa Stable-Baselines3; `video` aggiunge il supporto MP4.
+L'installazione supportata e editable dalla copia del repository: configurazioni
+e dataset rimangono nella radice, fuori dal pacchetto Python.
 
-Sul PC Linux, dopo aver modificato o creato file:
+## Comandi disponibili
 
 ```bash
-git status
-git add .
-git commit -m "Aggiorna test eseguito su Linux"
-git push
+python -m scripts.run_phase_0a --seed 42
+python -m scripts.run_phase_0b --objects 6 --headless --episodes 3
+python -m scripts.inspect_episode --objects 6 --policy top --seed 0 --episodes 20 --quiet
 ```
 
-Sul Mac:
+Per allenare usare il menu oppure:
 
 ```bash
-cd ~/Documents/physical-ai-mujoco
-git pull
+python scripts/allena.py --oggetti 6 --passi 25000 --paralleli 2
+python scripts/quanto_margine.py --oggetti 3 --scene 2 --finisci-al-target
+python scripts/verifica_fisica.py
+python -m scripts.record_phase_0b --objects 3 --format gif
 ```
 
-Ora VS Code mostrerà i file aggiornati.
+I precedenti comandi `scripts/*` sono mantenuti come punti di ingresso; il codice
+operativo risiede nel package. I modelli esistenti in `outputs/modelli/` e i loro
+file `_normalizzazione.pkl` restano utilizzabili con lo stesso numero di oggetti.
+Un numero diverso viene ora segnalato con un errore esplicito.
 
-## 6. Comandi Git più utili
+## Organizzazione
 
-| Comando | Significato |
+| Package | Responsabilita |
 |---|---|
-| `git status` | Mostra i file modificati e lo stato del repository |
-| `git pull` | Scarica e integra gli ultimi aggiornamenti da GitHub |
-| `git diff` | Mostra le modifiche non ancora preparate |
-| `git add nome_file.py` | Prepara un solo file per il commit |
-| `git add .` | Prepara tutte le modifiche nella cartella corrente |
-| `git commit -m "messaggio"` | Registra localmente una versione delle modifiche |
-| `git push` | Carica su GitHub i commit locali |
-| `git log --oneline` | Mostra la cronologia sintetica dei commit |
-| `git branch --show-current` | Mostra il branch attuale |
+| `contracts` | Observation, PrivilegedState, decisione ed esiti |
+| `scene` | Dataset, descrizione e campionamento della scena |
+| `simulation` | MuJoCo, sessione della scena, assestamento, pool, viewer |
+| `observe` | Lettura esatta e acquisizione stereo grezza |
+| `decide` | Classi decisionali casuale, altezza, target e PPO |
+| `execute` | Rimozione ideale tramite API del simulatore |
+| `task` | Disturbo, reward, crollo, successo e fine episodio |
+| `envs` | Adapter Gymnasium; percorso storico mantenuto |
+| `infrastructure` | Builder e adapter dei callback esistenti |
+| `experiments` | Rollout, training, registrazione, monitor e metadati |
+| `evaluation` | Ispezione, ricerca esaustiva, confronto e verifiche fisiche |
+| `ui` | Menu e interazione con l'utente |
 
-## 7. Se `git push` viene rifiutato
+Ogni ruolo pubblica la sua API tramite `__init__.py`. DECIDE riceve dati, produce
+un `ObjectDecision` e non legge il simulatore. Il runner passa la decisione
+all'ambiente, che coordina gli altri componenti.
 
-Può accadere quando GitHub contiene modifiche che il computer locale non ha ancora scaricato.
+## Stato attuale e limiti
 
-Eseguire:
+- Fase 0A e ciclo 0B implementati; esiste un prototipo PPO per 1A.
+- `state` conserva i 17 valori originali per oggetto; `stereo` restituisce due
+  immagini RGB; `both` restituisce stato e immagini sincronizzati.
+- Le immagini sono acquisizione grezza: non c'e ancora ricostruzione stereo,
+  student percettivo o belief calibrato.
+- L'osservazione esatta include massa, attrito, presenza e target. Come ottenere
+  o sostituire questi campi nella percezione e una decisione della fase 1B.
+- La rimozione resta ideale: il robot non e ancora presente.
+- Con la configurazione attuale l'episodio termina al target, prosegue dopo un
+  crollo e ha limite di 64 azioni. `is_success` richiede target rimosso senza
+  crolli precedenti. Il disturbo considera la traslazione finale massima degli
+  oggetti rimasti, escludendo il target; non misura il percorso o la rotazione.
+- La validazione scientifica di 1A deve ancora definire split e gate. I seed
+  della valutazione del trainer sono registrati, ma non dimostrano un test set
+  indipendente dal training.
 
-```bash
-git pull --rebase
-git push
-```
-
-Se Git segnala un conflitto, non forzare il caricamento. Aprire i file indicati da VS Code, scegliere quali modifiche mantenere, quindi eseguire:
-
-```bash
-git add .
-git rebase --continue
-git push
-```
-
-Se non si è sicuri di come risolvere il conflitto, fermarsi e controllare `git status` prima di procedere.
-
-## 8. Annullare modifiche non ancora salvate in un commit
-
-Per vedere prima quali modifiche andrebbero perse:
-
-```bash
-git diff
-```
-
-Per annullare le modifiche locali di un singolo file:
+## Test e riproducibilita
 
 ```bash
-git restore percorso/del/file.py
+python -m pytest -q
+python scripts/verifica_fisica.py
 ```
 
-Questo comando elimina le modifiche non registrate di quel file, quindi va usato con attenzione.
+I test grafici richiedono accesso al display macOS. Su Linux senza display il
+backend offscreen va configurato in base alla macchina (EGL oppure OSMesa).
+Un errore CoreGraphics di accesso al display non certifica un errore della stereo.
 
-## 9. Usare il repository in Google Colab
+Ogni nuovo training salva anche `<modello>_run.json`: parametri, seed di
+valutazione, versioni, commit, hash del codice, configurazioni, dataset e risultati.
+La migrazione e documentata in [docs/RESTRUCTURING.md](docs/RESTRUCTURING.md).
 
-Per un repository pubblico:
+## Documenti guida
 
-```python
-!git clone https://github.com/TUO-USERNAME/physical-ai-mujoco.git
-%cd physical-ai-mujoco
-!pip install -q mujoco
-```
+- [Architettura](docs/ARCHITECTURE.md)
+- [De-idealizzazione](docs/DEIDEALIZATION.md)
+- [Registro delle modifiche](MODIFICHE.md)
+- [Documentazione precedente, storica](docs/history/)
 
-Il runtime Colab è temporaneo. Prima di chiuderlo, scaricare i file importanti oppure eseguire commit e push solo dopo aver configurato un metodo di autenticazione sicuro. Non scrivere token GitHub direttamente nei notebook destinati al repository.
-
-## 10. Buone abitudini
-
-- Eseguire sempre `git pull` prima di iniziare.
-- Fare commit piccoli, con un messaggio chiaro.
-- Eseguire `git status` prima di `git add .`.
-- Non lavorare contemporaneamente sullo stesso file da Mac e Linux senza sincronizzare.
-- Non caricare password, token, credenziali o materiale riservato dell'ente.
-- Non caricare l'ambiente Conda: usare `environment.yml` o `requirements.txt` per descrivere le dipendenze.
-- Caricare codice e configurazioni; evitare video, dataset, cache e risultati molto pesanti.
-
-## Promemoria velocissimo
-
-All'inizio:
-
-```bash
-cd percorso/physical-ai-mujoco
-git pull
-```
-
-Alla fine:
-
-```bash
-git status
-git add .
-git commit -m "Descrive cosa è cambiato"
-git push
-```
-
+Gli output e le vecchie copie in `_to_delete/` rimangono locali, esclusi da Git.

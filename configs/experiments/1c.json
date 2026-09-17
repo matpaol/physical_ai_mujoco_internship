@@ -1,0 +1,8 @@
+{
+  "name": "1C · Robustezza percettiva",
+  "available": false,
+  "description": "Richiede la sorgente alternativa di osservazioni degradate.",
+  "default_decider": "ppo",
+  "operations": [],
+  "env_overrides": {}
+}

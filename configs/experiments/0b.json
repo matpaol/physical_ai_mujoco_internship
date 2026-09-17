@@ -1,0 +1,19 @@
+{
+  "name": "0B · Ciclo ideale di riferimento",
+  "available": true,
+  "description": "Osservazione esatta, decisione casuale, rimozione ideale.",
+  "default_decider": "random",
+  "operations": [
+    "1",
+    "2",
+    "4",
+    "5",
+    "6"
+  ],
+  "env_overrides": {
+    "components": {
+      "observer": "exact",
+      "executor": "ideal_removal"
+    }
+  }
+}

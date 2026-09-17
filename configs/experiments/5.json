@@ -1,0 +1,8 @@
+{
+  "name": "5 · Scene rappresentative",
+  "available": false,
+  "description": "Richiede asset e variazioni fisiche definiti e validati.",
+  "default_decider": "ppo",
+  "operations": [],
+  "env_overrides": {}
+}

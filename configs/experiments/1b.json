@@ -1,0 +1,8 @@
+{
+  "name": "1B · Prima ricostruzione stereo",
+  "available": false,
+  "description": "Richiede la ricostruzione delle immagini in Observation.",
+  "default_decider": "ppo",
+  "operations": [],
+  "env_overrides": {}
+}
