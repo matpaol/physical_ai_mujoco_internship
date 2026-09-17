@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "units": {
+    "length": "m",
+    "angle": "rad"
+  },
+  "ground_types": [
+    {
+      "id": "flat_standard",
+      "shape": "box",
+      "size": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 0.05
+      },
+      "inclination": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "friction": {
+        "sliding": 0.8,
+        "torsional": 0.005,
+        "rolling": 0.005
+      },
+      "roughness": {
+        "type": "none"
+      },
+      "rgba": [
+        0.45,
+        0.45,
+        0.45,
+        1.0
+      ]
+    },
+    {
+      "id": "floor_infinite",
+      "shape": "plane",
+      "size": {
+        "x": 6.0,
+        "y": 6.0,
+        "z": 0.1
+      },
+      "inclination": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "friction": {
+        "sliding": 0.8,
+        "torsional": 0.01,
+        "rolling": 0.005
+      },
+      "roughness": {
+        "type": "none"
+      },
+      "rgba": [
+        0.45,
+        0.45,
+        0.45,
+        1.0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "ground_selection": {
+    "type_id": "floor_infinite"
+  },
+  "object_selection": {
+    "required_type_ids": [
+      "slab",
+      "disc",
+      "plank",
+      "slab",
+      "box",
+      "disc"
+    ]
+  },
+  "spawn": {
+    "x_range": [
+      -0.06,
+      0.06
+    ],
+    "y_range": [
+      -0.06,
+      0.06
+    ],
+    "z_range": [
+      0.1,
+      0.1
+    ],
+    "random_orientation": true,
+    "allow_initial_overlap": true,
+    "edge_margin": 0.05,
+    "max_attempts_per_object": 300,
+    "release_clearance": 0.04
+  },
+  "release_mode": "sequential",
+  "randomisation": {
+    "center_of_mass_jitter": 0.25
+  }
+}

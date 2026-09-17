@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "units": {
+    "length": "m",
+    "density": "kg/m3"
+  },
+  "object_types": [
+    {
+      "id": "box",
+      "shape": "box",
+      "size_range": {
+        "x": [0.05, 0.15],
+        "y": [0.05, 0.15],
+        "z": [0.05, 0.15]
+      },
+      "density_range": [300.0, 1500.0],
+      "friction": {
+        "sliding_range": [0.3, 0.9],
+        "torsional": 0.005,
+        "rolling": 0.005
+      },
+      "rgba": [0.25, 0.5, 0.9, 1.0]
+    },
+    {
+      "id": "cylinder",
+      "shape": "cylinder",
+      "size_range": {
+        "radius": [0.03, 0.08],
+        "height": [0.05, 0.2]
+      },
+      "density_range": [300.0, 1500.0],
+      "friction": {
+        "sliding_range": [0.3, 0.9],
+        "torsional": 0.005,
+        "rolling": 0.005
+      },
+      "rgba": [0.9, 0.45, 0.2, 1.0]
+    },
+    {
+      "id": "sphere",
+      "shape": "sphere",
+      "size_range": {
+        "radius": [0.04, 0.1]
+      },
+      "density_range": [300.0, 1500.0],
+      "friction": {
+        "sliding_range": [0.3, 0.9],
+        "torsional": 0.005,
+        "rolling": 0.005
+      },
+      "rgba": [0.3, 0.75, 0.35, 1.0]
+    },
+    {
+      "id": "bar_rect",
+      "shape": "box",
+      "size_range": {
+        "x": [0.2, 0.4],
+        "y": [0.02, 0.04],
+        "z": [0.02, 0.04]
+      },
+      "density_range": [300.0, 1200.0],
+      "friction": {
+        "sliding_range": [0.3, 0.9],
+        "torsional": 0.005,
+        "rolling": 0.005
+      },
+      "rgba": [0.6, 0.35, 0.2, 1.0]
+    },
+    {
+      "id": "bar_round",
+      "shape": "cylinder",
+      "size_range": {
+        "radius": [0.01, 0.03],
+        "height": [0.2, 0.4]
+      },
+      "density_range": [300.0, 1200.0],
+      "friction": {
+        "sliding_range": [0.3, 0.9],
+        "torsional": 0.005,
+        "rolling": 0.005
+      },
+      "rgba": [0.55, 0.3, 0.15, 1.0]
+    }
+  ]
+}

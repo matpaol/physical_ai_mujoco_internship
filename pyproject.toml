@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "physical-ai-mujoco"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "mujoco>=3.1",
+    "numpy>=1.26",
+    "gymnasium>=1.0",
+    "imageio>=2.31",
+    "opencv-python>=4.8",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+include = ["physical_ai_mujoco*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

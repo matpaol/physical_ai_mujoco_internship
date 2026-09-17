@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "ground_selection": {
+    "type_id": "flat_standard"
+  },
+  "object_selection": {
+    "required_type_ids": [
+      "box",
+      "cylinder"
+    ]
+  },
+  "spawn": {
+    "x_range": [-0.35, 0.35],
+    "y_range": [-0.35, 0.35],
+    "z_range": [0.3, 0.6],
+    "random_orientation": true,
+    "allow_initial_overlap": false,
+    "edge_margin": 0.1,
+    "max_attempts_per_object": 100
+  },
+  "release_mode": "simultaneous"
+}
+
