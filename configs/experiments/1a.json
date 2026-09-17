@@ -15,6 +15,10 @@
     "components": {
       "observer": "exact",
       "executor": "ideal_removal"
+    },
+    "task": {
+      "terminate_on_target": true,
+      "terminate_on_collapse": false
     }
   }
 }

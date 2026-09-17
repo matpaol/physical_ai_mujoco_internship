@@ -287,41 +287,144 @@ def verify() -> None:
 
 
 def main() -> int:
-    ACTIVE_EXPERIMENT.activate()
+    """Avvio guidato: prima la fase, poi soltanto le sue scelte."""
     print_banner()
-
     while True:
-        allowed = set(ACTIVE_EXPERIMENT.operations) | {"0", "7"}
-        actions = {
-            key: action for key, _, _, action in MENU if action and key in allowed
-        }
-        print(f"\nConfigurazione: {ACTIVE_EXPERIMENT.name}")
-        print("Cosa vuoi fare? (7 per cambiare fase)\n")
-        for key, title, description, _ in MENU:
-            if key not in allowed:
-                continue
-            marker = "  (predefinito)" if key == "1" else ""
-            print(f"  {key}. {title}{marker}")
-            if description:
-                print(f"     {description}\n")
-
-        choice = ask("Scelta", default="1" if "1" in allowed else "6")
-        if choice == "0":
+        profile = choose_phase()
+        if profile is None:
             return 0
-        if choice not in actions:
-            print(f"Scelta non valida: {choice!r}")
-            continue
-
-        print()
         try:
-            actions[choice]()
+            if profile.path.stem == "0a":
+                run_phase_0a()
+            elif profile.path.stem == "0b":
+                run_phase_0b()
+            elif profile.path.stem == "1a":
+                run_phase_1a()
         except KeyboardInterrupt:
-            print("\nInterrotto.")
+            print("\nEsecuzione interrotta.")
         except Exception as error:  # noqa: BLE001
             print(f"\nErrore: {error}")
 
-        if not ask_yes_no("\nTornare al menu?", default=True):
-            return 0
+
+def choose_phase() -> ExperimentProfile | None:
+    """Sceglie il grado di de-idealizzazione, senza numeri ambigui."""
+    global ACTIVE_EXPERIMENT
+    profiles = {profile.path.stem.lower(): profile for profile in available_profiles()}
+    print("\nQuale fase vuoi eseguire?\n")
+    for code, profile in profiles.items():
+        status = "" if profile.available else "  [da sviluppare]"
+        print(f"  {code.upper():>2}  {profile.name.split('·', 1)[-1].strip()}{status}")
+        print(f"      {profile.description}")
+    print("   X  Esci")
+
+    while True:
+        choice = ask("Fase", default="0B").strip().lower()
+        if choice in {"x", "esci", "exit", "0"}:
+            return None
+        profile = profiles.get(choice)
+        if profile is None:
+            print("Scrivi il nome della fase, per esempio 0A, 0B oppure 1A.")
+            continue
+        if not profile.available:
+            print(f"\n{profile.name} non e' ancora eseguibile: {profile.description}\n")
+            continue
+        profile.activate()
+        ACTIVE_EXPERIMENT = profile
+        print(f"\nFase selezionata: {profile.name}\n")
+        return profile
+
+
+def run_phase_0a() -> None:
+    """Dataset -> descrizione della scena -> MuJoCo, senza Gymnasium."""
+    print("Carico i dataset e genero una scena. Qui non esistono agente, azioni o reward.\n")
+    seed = ask_int("Seed della scena", default=42, low=0, high=10**9)
+    visual = ask_yes_no("Vuoi vedere la scena in MuJoCo?", default=True)
+    slow = visual and ask_yes_no("Vuoi vederla al rallentatore?", default=False)
+    inspect_scene(seed=seed, visual=visual, slow=slow)
+
+
+def run_phase_0b() -> None:
+    """MuJoCo dentro Gymnasium, decisioni casuali, fino al terreno vuoto."""
+    from physical_ai_mujoco.infrastructure.policy_adapter import casuale
+
+    print(
+        "MuJoCo calcola la fisica; Gymnasium esegue reset(), step(), reward e fine episodio.\n"
+        "La scelta e' casuale e l'episodio continua finche' tutti gli oggetti sono rimossi.\n"
+    )
+    object_count = ask_int("Quanti oggetti nella scena?", default=3, low=1, high=12)
+    episodes = ask_int("Quanti episodi?", default=1, low=1, high=10000)
+    visual, speed = ask_visualization()
+    run_guided_episodes(casuale, object_count, episodes, visual, speed)
+
+
+def run_phase_1a() -> None:
+    """Teacher con stato esatto: allena PPO oppure esegue un modello salvato."""
+    while True:
+        print("  1  Allena una nuova policy PPO")
+        print("  2  Esegui una policy gia' allenata")
+        print("  0  Torna alla scelta della fase\n")
+        choice = ask("Operazione", default="2")
+        if choice == "0":
+            return
+        if choice == "1":
+            train_policy()
+            return
+        if choice == "2":
+            selected = choose_trained_policy()
+            if selected is None:
+                continue
+            policy, trained_object_count = selected
+            object_count = trained_object_count or ask_int(
+                "Quanti oggetti usava il modello?", default=6, low=1, high=12
+            )
+            episodes = ask_int("Quanti episodi?", default=5, low=1, high=10000)
+            visual, speed = ask_visualization()
+            run_guided_episodes(policy, object_count, episodes, visual, speed)
+            return
+        print("Scegli 1, 2 oppure 0.")
+
+
+def choose_trained_policy():
+    from physical_ai_mujoco.infrastructure import policy_adapter as policies
+
+    models = policies.modelli_disponibili()
+    if not models:
+        print("\nNon ci sono modelli in outputs/modelli/. Prima allena una policy.\n")
+        return None
+    print("\nModelli disponibili:")
+    for index, path in enumerate(models, 1):
+        print(f"  {index}  {path.stem}")
+    selected = models[ask_int("Quale modello", 1, 1, len(models)) - 1]
+    return policies.carica(selected), _oggetti_dal_nome(selected.stem)
+
+
+def ask_visualization() -> tuple[bool, float]:
+    visual = ask_yes_no("Vuoi vedere la simulazione?", default=True)
+    slow = visual and ask_yes_no("Vuoi vederla al rallentatore?", default=False)
+    return visual, 0.5 if slow else (1.0 if visual else 0.0)
+
+
+def run_guided_episodes(scegli, object_count, episodes, visual, speed) -> None:
+    from physical_ai_mujoco.experiments.rollout import run_episode
+
+    env = make_env(
+        obs_mode="state",
+        render_mode="human" if visual else None,
+        object_count=object_count,
+        highlight_target=visual,
+        realtime_factor=speed,
+        resample_shapes=not visual,
+    )
+    arguments = argparse.Namespace(
+        seed=0, save_stereo=None, obs_mode="state", no_catalogue=episodes > 10
+    )
+    successes = 0
+    try:
+        for episode in range(episodes):
+            successes += run_episode(env, episode, arguments, None, scegli)
+    finally:
+        env.close()
+    print(f"\nEpisodi completati: {episodes} | target estratti: {successes}")
 
 
 # ----------------------------------------------------------------- le azioni
@@ -518,12 +621,14 @@ def inspect_episode() -> None:
     )
 
 
-def inspect_scene() -> None:
+def inspect_scene(seed=None, visual=False, slow=False) -> None:
     from physical_ai_mujoco.simulation.settling import run_until_settled
     from physical_ai_mujoco.simulation.simulator import Simulator
+    from physical_ai_mujoco.simulation.viewer import SimulationViewer
     from scripts.run_phase_0a import create_scene, print_result
 
-    seed = ask_int("Seed della scena?", default=42, low=0, high=10**9)
+    if seed is None:
+        seed = ask_int("Seed della scena?", default=42, low=0, high=10**9)
     scene = create_scene(seed)
     output_path = PROJECT_ROOT / f"outputs/scenes/{scene.scene_id}.json"
     scene.save(output_path)
@@ -531,9 +636,26 @@ def inspect_scene() -> None:
     print(f"Descrizione: {output_path}\n")
 
     simulator = Simulator(scene)
+    viewer = SimulationViewer("human", 0.5 if slow else 1.0) if visual else None
     try:
-        print_result(run_until_settled(simulator))
+        if viewer is None:
+            result = run_until_settled(simulator)
+        else:
+            from physical_ai_mujoco.simulation.settling import SettlingResult
+
+            viewer.attach(simulator)
+            viewer.begin_settle()
+            outcome = simulator.step_until_settled(on_step=viewer.on_step)
+            result = SettlingResult(
+                outcome.settled,
+                simulator.time,
+                outcome.steps,
+                simulator.get_object_states(),
+            )
+        print_result(result)
     finally:
+        if viewer is not None:
+            viewer.close()
         simulator.close()
 
 
