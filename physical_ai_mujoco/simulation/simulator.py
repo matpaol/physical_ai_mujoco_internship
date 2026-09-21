@@ -388,6 +388,10 @@ class Simulator:
         self.data.qpos[qpos_address : qpos_address + 3] = position
         self.data.qpos[qpos_address + 3 : qpos_address + 7] = quaternion
         self.data.qvel[dof_address : dof_address + 6] = 0.0
+        # qpos e le pose cartesiane dei geom sono cache separate in MuJoCo.
+        # Senza il forward, raycast e renderer continuano a vedere la posa
+        # precedente fino al passo fisico successivo.
+        mujoco.mj_forward(self.model, self.data)
 
     def contact_pairs(self) -> list[tuple[str, str]]:
         """Coppie di corpi attualmente a contatto, senza duplicati.
@@ -511,6 +515,33 @@ class Simulator:
             for instance_id in self.present_objects()
         }
 
+    def object_projection_bounds(
+        self, instance_id: str, axis
+    ) -> tuple[float, float]:
+        """Limiti dell'AABB MuJoCo dell'oggetto proiettati su un asse mondo."""
+        if instance_id not in self._body_ids:
+            raise KeyError(f"Oggetto sconosciuto: {instance_id}")
+        direction = np.asarray(axis, dtype=float)
+        norm = float(np.linalg.norm(direction))
+        if not np.isfinite(direction).all() or norm <= 0:
+            raise ValueError("L'asse deve essere un vettore finito non nullo")
+        direction /= norm
+        mujoco.mj_forward(self.model, self.data)
+        body_id = self._body_ids[instance_id]
+        first = int(self.model.body_geomadr[body_id])
+        count = int(self.model.body_geomnum[body_id])
+        bounds = []
+        for geom_id in range(first, first + count):
+            aabb = np.asarray(self.model.geom_aabb[geom_id], dtype=float)
+            rotation = self.data.geom_xmat[geom_id].reshape(3, 3)
+            center = self.data.geom_xpos[geom_id] + rotation @ aabb[:3]
+            radius = float(np.sum(np.abs(direction @ rotation) * aabb[3:]))
+            projection = float(direction @ center)
+            bounds.append((projection - radius, projection + radius))
+        if not bounds:
+            raise ValueError(f"L'oggetto {instance_id} non contiene geom")
+        return min(item[0] for item in bounds), max(item[1] for item in bounds)
+
     # -------------------------------------------------------------- rendering
 
     def render_camera(self, camera_name: str) -> np.ndarray:
@@ -527,6 +558,85 @@ class Simulator:
                 "generate_scene()"
             )
         return self.render_camera("cam_left"), self.render_camera("cam_right")
+
+    def render_depth_camera(self, camera_name: str) -> np.ndarray:
+        """Profondita' metrica del renderer; canale RGB-D distinto dalla stereo."""
+        renderer = self._get_renderer()
+        renderer.enable_depth_rendering()
+        try:
+            renderer.update_scene(self.data, camera=camera_name)
+            return np.asarray(renderer.render(), dtype=float).copy()
+        finally:
+            renderer.disable_depth_rendering()
+
+    def render_depth_stereo(self) -> tuple[np.ndarray, np.ndarray]:
+        if self.scene.stereo_camera is None:
+            raise RuntimeError("La scena non ha un rig stereo")
+        return self.render_depth_camera("cam_left"), self.render_depth_camera("cam_right")
+
+    def raycast(self, origin, direction) -> float | None:
+        """Distanza al primo hit; nessun ID privilegiato esce dal simulatore."""
+        p = np.asarray(origin, dtype=float)
+        d = np.asarray(direction, dtype=float)
+        if p.shape != (3,) or d.shape != (3,) or not np.isfinite(p).all() or not np.isfinite(d).all():
+            raise ValueError("Origine o direzione del raggio non valide")
+        length = np.linalg.norm(d)
+        if length <= 0:
+            raise ValueError("Direzione del raggio nulla")
+        distance = mujoco.mj_ray(self.model, self.data, p, d / length, None, True, -1, None)
+        return None if distance < 0 else float(distance)
+
+    def render_instance_masks(self, camera_name: str) -> dict[str, np.ndarray]:
+        """Maschere visibili per istanza dal renderer di segmentazione MuJoCo.
+
+        Gli ID sono etichette ideali di simulazione. Questa API serve a creare
+        dati sintetici e a valutare OSSERVA, non a simulare un detector RGB.
+        """
+        renderer = self._get_renderer()
+        renderer.enable_segmentation_rendering()
+        try:
+            renderer.update_scene(self.data, camera=camera_name)
+            segmentation = renderer.render()
+        finally:
+            renderer.disable_segmentation_rendering()
+
+        geom_ids = segmentation[:, :, 0]
+        geom_pixels = segmentation[:, :, 1] == mujoco.mjtObj.mjOBJ_GEOM.value
+        body_to_instance = {body: name for name, body in self._body_ids.items()}
+        masks: dict[str, np.ndarray] = {}
+        for geom_id in np.unique(geom_ids[geom_pixels]):
+            body_id = int(self.model.geom_bodyid[int(geom_id)])
+            instance_id = body_to_instance.get(body_id)
+            if instance_id is None or instance_id in self._removed:
+                continue
+            if instance_id not in masks:
+                masks[instance_id] = np.zeros(geom_ids.shape, dtype=bool)
+            masks[instance_id] |= geom_pixels & (geom_ids == geom_id)
+        return masks
+
+    def stereo_calibration(self) -> tuple[np.ndarray, np.ndarray, float]:
+        """K, world_from_left (frame camera CV) e baseline del rig simulato."""
+        rig = self.scene.stereo_camera
+        if rig is None:
+            raise RuntimeError("La scena non ha un rig stereo")
+        camera_id = mujoco.mj_name2id(
+            self.model, mujoco.mjtObj.mjOBJ_CAMERA, "cam_left"
+        )
+        focal = rig.focal_length_px()
+        intrinsics = np.array(
+            [[focal, 0.0, rig.width / 2.0],
+             [0.0, focal, rig.height / 2.0],
+             [0.0, 0.0, 1.0]],
+            dtype=float,
+        )
+        world_from_left = np.eye(4, dtype=float)
+        # MuJoCo: x destra, y alto, -z avanti. CV: x destra, y basso, z avanti.
+        world_from_left[:3, :3] = (
+            self.data.cam_xmat[camera_id].reshape(3, 3)
+            @ np.diag([1.0, -1.0, -1.0])
+        )
+        world_from_left[:3, 3] = self.data.cam_xpos[camera_id]
+        return intrinsics, world_from_left, rig.baseline
 
     def _get_renderer(self) -> mujoco.Renderer:
         if self._renderer is None:

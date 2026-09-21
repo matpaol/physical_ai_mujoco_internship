@@ -18,6 +18,7 @@ dependencies = [
 test = ["pytest>=8.0"]
 train = ["stable-baselines3>=2.4"]
 video = ["imageio-ffmpeg>=0.4"]
+detector = ["ultralytics>=8.3"]
 
 [tool.setuptools.packages.find]
 include = ["physical_ai_mujoco*", "scripts*"]

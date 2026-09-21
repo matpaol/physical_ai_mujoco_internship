@@ -17,15 +17,37 @@ class PolicyAdapter:
         self.decider = decider
 
     def __call__(self, env, info, rng, osservazione=None):
-        if isinstance(self.decider, PPODecider) and osservazione is not None:
+        if isinstance(self.decider, PPODecider):
             vector = (
                 osservazione["state"]
                 if isinstance(osservazione, dict)
-                else osservazione
+                else osservazione if osservazione is not None else env.unwrapped._state_observation()
             )
             return self.decider.predict_index(vector)
         observation = env.unwrapped.decision_observation()
         return env.unwrapped.action_index(self.decider.decide(observation))
+
+
+class SensorPolicyAdapter:
+    """Usa il vettore OSSERVA, mai il ramo privilegiato del teacher."""
+
+    def __init__(self, model, normalizer):
+        self.model = model
+        self.normalizer = normalizer
+
+    def __call__(self, env, info, rng, osservazione=None):
+        if env.unwrapped.obs_mode != "sensor":
+            raise ValueError("Un modello sensoriale richiede obs_mode='sensor'")
+        vector = osservazione
+        if vector is None:
+            vector = env.unwrapped._latest_encoded.vector
+        expected = tuple(self.model.observation_space.shape)
+        if tuple(vector.shape) != expected:
+            raise ValueError(f"Il modello richiede osservazioni {expected}, ricevute {vector.shape}")
+        action, _ = self.model.predict(
+            self.normalizer.normalize_obs(vector), deterministic=True
+        )
+        return int(action)
 
 
 def casuale(env, info, rng, osservazione=None):
@@ -41,6 +63,17 @@ def target(env, info, rng, osservazione=None):
 
 
 def carica(percorso):
+    percorso = Path(percorso)
+    if percorso.stem.startswith("ppo_sensor_"):
+        from stable_baselines3 import PPO
+        import pickle
+
+        stats = percorso.with_name(f"{percorso.stem}_normalizzazione.pkl")
+        if not stats.is_file():
+            raise FileNotFoundError(f"Manca {stats.name}: statistiche di normalizzazione richieste.")
+        with stats.open("rb") as stream:
+            normalizer = pickle.load(stream)
+        return SensorPolicyAdapter(PPO.load(percorso), normalizer)
     return PolicyAdapter(PPODecider.load(percorso))
 
 

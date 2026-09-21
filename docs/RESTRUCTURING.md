@@ -29,8 +29,9 @@ numero della fase. La variabile di processo `PHYSICAL_AI_EXPERIMENT` trasmette
 il percorso della configurazione ai programmi figli e viene letta dal builder
 all'avvio. Si puo impostarla anche per un comando non interattivo.
 
-0A offre generazione e verifica; 0B il ciclo ideale; 1A anche il training PPO.
-1B/1C/2/4/5/6 sono visibili ma non attivabili. La fase 3 e assorbita.
+0A offre generazione e verifica; 0B il ciclo ideale; 1A il training PPO
+privilegiato. 1B e 1C sono attivabili con pipeline stereo+LiDAR e modelli PPO
+separati. 2/4/5/6 restano visibili ma non attivabili. La fase 3 e assorbita.
 I vecchi percorsi `configs/phase_0a` e `configs/phase_0b` rimangono per compatibilita.
 
 ## Verifiche
@@ -77,9 +78,9 @@ Il confronto esclude tempo reale e frame; la grafica e verificata separatamente.
 
 ## Limiti e prossima revisione
 
-La ricostruzione stereo, la gestione di oggetti mancanti, l'identificazione del
-target tramite sensori e i campi non osservabili (massa/attrito) vanno definiti
-in 1B. Il vettore legacy e conservato per compatibilita con il teacher.
+Il vettore legacy e conservato per il teacher 1A. Il percorso sensoriale usa
+tracking, fusione LiDAR, CAD e un encoder separato. Restano aperte la
+calibrazione su dati reali, la qualita del grafo e l'esecuzione robotica.
 Scene e fisica non sono state rese piu difficili. La validazione scientifica di
 1A, inclusa la separazione training/test e il confronto con l'ottimo, resta aperta.
 

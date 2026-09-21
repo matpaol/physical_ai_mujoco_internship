@@ -9,6 +9,28 @@ from .core import (
     ExecutionOutcome,
     TaskOutcome,
 )
+from .observation import (
+    PerceptualObject,
+    PerceptualState,
+    SensorEvidence,
+    SensorBundle,
+    TaskContext,
+    SceneObject,
+    SceneState,
+    PhysicalRelation,
+    PhysicalRelationState,
+    ObjectUncertainty,
+    UncertaintyState,
+    ObservationInvariantError,
+    validate_observation,
+)
+from .sensing import (
+    Detection,
+    LidarFrame,
+    SensorCalibration,
+    StereoFrame,
+    SynchronizedSensorPacket,
+)
 
 __all__ = [
     "STATE_FEATURES_PER_OBJECT",
@@ -18,4 +40,22 @@ __all__ = [
     "ObjectDecision",
     "ExecutionOutcome",
     "TaskOutcome",
+    "PerceptualObject",
+    "PerceptualState",
+    "SensorEvidence",
+    "SensorBundle",
+    "TaskContext",
+    "SceneObject",
+    "SceneState",
+    "PhysicalRelation",
+    "PhysicalRelationState",
+    "ObjectUncertainty",
+    "UncertaintyState",
+    "ObservationInvariantError",
+    "validate_observation",
+    "Detection",
+    "LidarFrame",
+    "SensorCalibration",
+    "StereoFrame",
+    "SynchronizedSensorPacket",
 ]

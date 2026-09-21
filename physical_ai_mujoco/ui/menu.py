@@ -300,6 +300,8 @@ def main() -> int:
                 run_phase_0b()
             elif profile.path.stem == "1a":
                 run_phase_1a()
+            elif profile.path.stem in {"1b", "1c"}:
+                run_phase_1b()
         except KeyboardInterrupt:
             print("\nEsecuzione interrotta.")
         except Exception as error:  # noqa: BLE001
@@ -323,7 +325,7 @@ def choose_phase() -> ExperimentProfile | None:
             return None
         profile = profiles.get(choice)
         if profile is None:
-            print("Scrivi il nome della fase, per esempio 0A, 0B oppure 1A.")
+            print("Scrivi il nome della fase, per esempio 0A, 0B, 1A oppure 1B.")
             continue
         if not profile.available:
             print(f"\n{profile.name} non e' ancora eseguibile: {profile.description}\n")
@@ -370,7 +372,7 @@ def run_phase_1a() -> None:
             train_policy()
             return
         if choice == "2":
-            selected = choose_trained_policy()
+            selected = choose_trained_policy(sensor=False)
             if selected is None:
                 continue
             policy, trained_object_count = selected
@@ -384,12 +386,59 @@ def run_phase_1a() -> None:
         print("Scegli 1, 2 oppure 0.")
 
 
-def choose_trained_policy():
+def run_phase_1b() -> None:
+    """Policy che riceve soltanto il vettore prodotto da stereo + LiDAR."""
+    from physical_ai_mujoco.sensors import resolve_detector_weights
+
+    try:
+        detector_path = resolve_detector_weights()
+    except FileNotFoundError as error:
+        print(f"\nLa fase 1B non puo' partire: {error}\n")
+        return
+    print(
+        "La policy riceve detection B/N, geometria LiDAR e relazioni codificate; "
+        "non riceve lo stato esatto MuJoCo.\n"
+        f"Detector: {detector_path.name}\n"
+    )
+    while True:
+        print("  1  Allena una nuova policy PPO sensoriale")
+        print("  2  Esegui una policy sensoriale gia' allenata")
+        print("  0  Torna alla scelta della fase\n")
+        choice = ask("Operazione", default="2")
+        if choice == "0":
+            return
+        if choice == "1":
+            train_policy()
+            return
+        if choice == "2":
+            selected = choose_trained_policy(sensor=True)
+            if selected is None:
+                continue
+            policy, trained_object_count = selected
+            object_count = trained_object_count or ask_int(
+                "Quanti oggetti usava il modello?", default=6, low=1, high=12
+            )
+            episodes = ask_int("Quanti episodi?", default=5, low=1, high=10000)
+            visual, speed = ask_visualization()
+            run_guided_episodes(policy, object_count, episodes, visual, speed)
+            return
+        print("Scegli 1, 2 oppure 0.")
+
+
+def choose_trained_policy(sensor: bool | None = None):
     from physical_ai_mujoco.infrastructure import policy_adapter as policies
 
     models = policies.modelli_disponibili()
+    if sensor is True:
+        models = [path for path in models if path.stem.startswith("ppo_sensor_")]
+    elif sensor is False:
+        models = [path for path in models if not path.stem.startswith("ppo_sensor_")]
     if not models:
-        print("\nNon ci sono modelli in outputs/modelli/. Prima allena una policy.\n")
+        tipo = " sensoriali" if sensor else ""
+        print(
+            f"\nNon ci sono modelli{tipo} compatibili in outputs/modelli/. "
+            "Prima allena una policy.\n"
+        )
         return None
     print("\nModelli disponibili:")
     for index, path in enumerate(models, 1):

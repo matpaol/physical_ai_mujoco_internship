@@ -27,7 +27,7 @@ class RandomDecider(Decider):
 
 class HighestObjectDecider(Decider):
     def decide(self, observation):
-        valid = [o for o in observation.objects if o.present]
+        valid = [o for o in observation.objects if o.present and o.position is not None]
         if not valid:
             raise ValueError("Nessun oggetto presente")
         return ObjectDecision(max(valid, key=lambda o: o.position[2]).object_id)
@@ -41,8 +41,8 @@ class ImmediateTargetDecider(RandomDecider):
         return super().decide(observation)
 
 
-class PPODecider(Decider):
-    """Policy di inferenza. Il training rimane in experiments."""
+class PPODecider:
+    """Teacher PPO storico su stato privilegiato, separato dal Decider operativo."""
 
     def __init__(self, model, normalizer):
         self.model = model
@@ -75,6 +75,7 @@ class PPODecider(Decider):
         return int(action)
 
     def decide(self, observation):
-        # Nessuna maschera: preserva la policy PPO originale e le azioni non valide.
-        action = self.predict_index(observation.as_vector())
-        return ObjectDecision(observation.objects[action].object_id)
+        raise TypeError(
+            "Il PPO storico e' un teacher su stato esatto; usare predict_index "
+            "con il vettore privilegiato dell'environment."
+        )

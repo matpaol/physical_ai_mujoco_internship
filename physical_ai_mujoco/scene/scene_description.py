@@ -12,7 +12,7 @@ def bounding_radius(shape: str, size: dict[str, float]) -> float:
     E' la stima conservativa dell'ingombro: non dipende dall'orientamento,
     quindi vale anche per un oggetto che ruota mentre cade.
     """
-    if shape == "box":
+    if shape in {"box", "mesh"}:
         return math.sqrt(size["x"] ** 2 + size["y"] ** 2 + size["z"] ** 2) / 2.0
     if shape == "cylinder":
         return math.sqrt(size["radius"] ** 2 + (size["height"] / 2.0) ** 2)
@@ -23,7 +23,7 @@ def bounding_radius(shape: str, size: dict[str, float]) -> float:
 
 def half_extents(shape: str, size: dict[str, float]) -> tuple[float, float, float]:
     """Semi-dimensioni lungo gli assi del corpo."""
-    if shape == "box":
+    if shape in {"box", "mesh"}:
         return (size["x"] / 2.0, size["y"] / 2.0, size["z"] / 2.0)
     if shape == "cylinder":
         return (size["radius"], size["radius"], size["height"] / 2.0)
@@ -46,7 +46,7 @@ def principal_inertia(
     L'ipotesi e' che gli assi principali coincidano con gli assi del corpo, che
     per box, cilindro e sfera e' vero.
     """
-    if shape == "box":
+    if shape in {"box", "mesh"}:
         x, y, z = size["x"], size["y"], size["z"]
         return (
             mass * (y * y + z * z) / 12.0,
@@ -85,6 +85,10 @@ class ObjectDescription:
     # ha quasi mai la massa distribuita in modo uniforme, e per un compito che
     # dipende da cosa si ribalta e cosa no la differenza non e' un dettaglio.
     center_of_mass: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    # Solo per shape="mesh". Il file viene risolto dal loader rispetto al
+    # dataset, mentre la scala converte le unita' del file in metri MuJoCo.
+    mesh_file: str | None = None
+    mesh_scale: tuple[float, float, float] = (1.0, 1.0, 1.0)
 
     @property
     def has_offset_mass(self) -> bool:
@@ -210,4 +214,3 @@ class SceneDescription:
             json.dumps(self.to_dict(), indent=2),
             encoding="utf-8",
         )
-

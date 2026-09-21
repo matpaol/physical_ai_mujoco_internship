@@ -110,6 +110,8 @@ def resample_object_poses(
                 rgba=item.rgba,
                 pose=poses[-1],
                 center_of_mass=item.center_of_mass,
+                mesh_file=item.mesh_file,
+                mesh_scale=item.mesh_scale,
             )
         )
 
@@ -163,8 +165,15 @@ def _create_objects(
             name: float(rng.uniform(bounds[0], bounds[1]))
             for name, bounds in type_definition["size_range"].items()
         }
-        density = float(rng.uniform(*type_definition["density_range"]))
-        mass = density * _object_volume(type_definition["shape"], size)
+        volume = _object_volume(type_definition["shape"], size)
+        if "mass_range" in type_definition:
+            mass = float(rng.uniform(*type_definition["mass_range"]))
+            # Densita' equivalente dell'ingombro: resta metadato privilegiato,
+            # mentre massa e inerzia reali vengono ricavate dalla mesh da MuJoCo.
+            density = mass / volume
+        else:
+            density = float(rng.uniform(*type_definition["density_range"]))
+            mass = density * volume
         friction = type_definition["friction"]
         sliding = float(rng.uniform(*friction["sliding_range"]))
         radius = bounding_radius(type_definition["shape"], size)
@@ -199,6 +208,10 @@ def _create_objects(
                 ),
                 rgba=tuple(float(value) for value in type_definition["rgba"]),
                 pose=Pose(position=position, quaternion=quaternion),
+                mesh_file=type_definition.get("mesh_file"),
+                mesh_scale=tuple(
+                    float(value) for value in type_definition.get("mesh_scale", [1, 1, 1])
+                ),
             )
         )
 
@@ -224,6 +237,10 @@ def _sample_center_of_mass(
     randomization su un parametro che nel reale non si misura mai — molto piu'
     difendibile che randomizzare quelli che si potrebbero misurare.
     """
+    # Finche' non abbiamo massa e centro di massa misurati per la PFM-1, non
+    # inventiamo uno scostamento che obbligherebbe anche a inventarne l'inerzia.
+    if shape == "mesh":
+        return (0.0, 0.0, 0.0)
     jitter = float(
         scene_rules.get("randomisation", {}).get("center_of_mass_jitter", 0.0)
     )
@@ -380,7 +397,7 @@ def _position_is_free(
 
 
 def _object_volume(shape: str, size: dict[str, float]) -> float:
-    if shape == "box":
+    if shape in {"box", "mesh"}:
         return size["x"] * size["y"] * size["z"]
     if shape == "cylinder":
         return math.pi * size["radius"] ** 2 * size["height"]
@@ -413,4 +430,3 @@ def _quaternion_from_xy_angles(
         cos_x * sin_y,
         -sin_x * sin_y,
     )
-

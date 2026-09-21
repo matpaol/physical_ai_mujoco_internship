@@ -1,0 +1,1 @@
+"""Doppi di test condivisi."""

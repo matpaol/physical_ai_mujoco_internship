@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from xml.etree import ElementTree
 
 import mujoco
@@ -72,6 +73,7 @@ def build_mjcf(scene: SceneDescription) -> str:
     ElementTree.SubElement(visual, "global", **global_options)
 
     asset = ElementTree.SubElement(root, "asset")
+    _add_mesh_assets(asset, scene)
     ElementTree.SubElement(
         asset,
         "texture",
@@ -131,10 +133,38 @@ def build_mjcf(scene: SceneDescription) -> str:
 
 
 def build_model(scene: SceneDescription) -> tuple[mujoco.MjModel, mujoco.MjData]:
-    model = mujoco.MjModel.from_xml_string(build_mjcf(scene))
+    assets = {
+        _mesh_virtual_file(item): Path(item.mesh_file).read_bytes()
+        for item in scene.objects
+        if item.shape == "mesh" and item.mesh_file is not None
+    }
+    model = mujoco.MjModel.from_xml_string(build_mjcf(scene), assets)
     data = mujoco.MjData(model)
     mujoco.mj_forward(model, data)
     return model, data
+
+
+def _add_mesh_assets(asset: ElementTree.Element, scene: SceneDescription) -> None:
+    for item in scene.objects:
+        if item.shape != "mesh":
+            continue
+        if item.mesh_file is None:
+            raise ValueError(f"Mesh file mancante per {item.instance_id}")
+        ElementTree.SubElement(
+            asset,
+            "mesh",
+            name=_mesh_asset_name(item),
+            file=_mesh_virtual_file(item),
+            scale=_values(item.mesh_scale),
+        )
+
+
+def _mesh_asset_name(item: ObjectDescription) -> str:
+    return f"{item.instance_id}_mesh"
+
+
+def _mesh_virtual_file(item: ObjectDescription) -> str:
+    return f"{item.instance_id}.stl"
 
 
 def _add_ground(worldbody: ElementTree.Element, scene: SceneDescription) -> None:
@@ -212,12 +242,16 @@ def _add_object(
             ),
         )
 
+    shape_attributes = (
+        {"type": "mesh", "mesh": _mesh_asset_name(item)}
+        if item.shape == "mesh"
+        else {"type": item.shape, "size": _values(_mujoco_size(item))}
+    )
     ElementTree.SubElement(
         body,
         "geom",
         name=f"{item.instance_id}_geom",
-        type=item.shape,
-        size=_values(_mujoco_size(item)),
+        **shape_attributes,
         **geom_attributes,
         condim="6",
         friction=_values(item.friction),

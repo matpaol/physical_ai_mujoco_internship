@@ -58,6 +58,425 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-21 11:26:00 — Menu test modulare, scena riproducibile e diagnostica CAD
+
+**Chi:** Codex (GPT-5), su richiesta di Matteo Paolini.
+
+**Cosa:** Aggiunto `main_test.py` con moduli logici scena, OSSERVA,
+validazione sensori, pipeline dati, DECIDI e architettura. I nuovi test devono
+essere assegnati in `tests/suites.py`. Il test visivo OSSERVA chiede ora numero
+di scene, numero di oggetti e seed: Invio sul seed genera una nuova scena;
+un numero la riproduce. Aggiunta una diagnostica CAD su 24 pose e cinque
+frazioni di superficie sintetica con report JSON. L'encoder ricicla slot
+obsoleti e segnala overflow come spazio incerto. La valutazione PPO usa gli
+slot sensoriali quando richiesto; un adapter separato carica i modelli PPO
+sensoriali e le loro statistiche di normalizzazione. Testata una detection
+disturbata senza usare il ground truth per scartare falsi positivi.
+
+**Perché:** Il menu di OSSERVA fissava una sola scena da tre oggetti e il seed
+del profilo restava 42, dando l'impressione di una scena immutabile. La
+copertura dei test era difficile da avviare per area. Gli slot potevano
+esaurirsi con ID detector variabili. Un fit CAD accettato non dimostrava posa
+corretta: nella diagnostica al 10% di superficie l'errore del centro e 3,7 cm
+mediani, nonostante 24/24 fit accettati. Il rapporto dimensionale e 1 per
+costruzione quando il CAD viene accettato.
+
+**File:** `main_test.py`, `tests/`, `physical_ai_mujoco/evaluation/`,
+`physical_ai_mujoco/observe/`, `physical_ai_mujoco/experiments/train_teacher.py`,
+`physical_ai_mujoco/infrastructure/policy_adapter.py`, `MODIFICHE.md`.
+
+**Verifica:** 139 test passati nel progetto Desktop, con accesso al renderer
+MuJoCo; 20 warning non bloccanti. Diagnostica CAD eseguita su 120 combinazioni.
+Non eseguito training PPO, ne validazione con LiDAR reale o detector appreso.
+
+## 2026-09-20 17:46:01 — Pipeline sensoriale collegata a tracking, PPO e CAD PFM-1
+
+**Chi:** Codex (GPT-5), su richiesta di Matteo Paolini.
+
+**Cosa:** Il detector learned assegna ID temporali tramite `ObjectTracker`;
+`ObservationEncoder` converte scena, incertezza e relazioni in slot e vettore
+PPO a dimensione fissa. L'environment accetta `obs_mode="sensor"`, acquisisce
+uno `SynchronizedSensorPacket`, espone maschere di azione sensoriali e associa
+l'azione scelta al corpo simulato solo nell'adapter di esecuzione. Le fasi 1B e
+1C sono selezionabili: 1C applica disturbi fotometrici e LiDAR a runtime. La
+PFM-1 usa la STL per un allineamento CAD parziale con PCA, ICP trimmed e gate
+sull'errore; un fit rifiutato ricade sulla geometria conservativa visibile. Il
+benchmark registra rapporti dimensionali lineari e volumetrici, anche per
+fascia di esposizione. `Observer.observe` usa ora un unico contratto
+`(source, TaskContext)`. La vecchia catena `SensorBundle` emette una
+`DeprecationWarning` ed e limitata ai benchmark stereo-only/RGB-D.
+
+**Perché:** Gli ID `learned_###` dipendevano dall'ordine delle predizioni, PPO
+non poteva consumare un numero variabile di oggetti, la dimensione della mina
+interrata era quella della sola superficie visibile e i profili `fixed/random`
+non modificavano la fusione runtime. Inoltre l'environment dichiarava un
+observer iniettabile ma lo chiamava con una firma incompatibile.
+
+**File:** `physical_ai_mujoco/{observe,sensors,envs,infrastructure,evaluation,
+experiments,ui}/`, `configs/{experiments,observe_tests}/`, `tests/`,
+`README.md`, `docs/`, `MODIFICHE.md`.
+
+**Verifica:** 131 test automatici passati, inclusi rendering MuJoCo. Smoke test
+end-to-end `fusion_oracle` e `fusion_learned` completati con invarianti validi
+e report JSON. La singola scena di smoke aveva recall target 0: conferma che il
+collegamento funziona, non costituisce validazione statistica del detector o
+del LiDAR e non viene presentata come tale.
+
+## 2026-09-18 16:09:41 — Un solo percorso per camera, bundle e ricostruzione
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** La camera simulata configura la depth alla costruzione e alimenta
+anche le osservazioni stereo di Gymnasium. `BundleBuilder` e `DetectionNoise`
+gestiscono ora anche il rumore sui centroidi. `StereoObserver` seleziona
+esplicitamente la ricostruzione `stereo` o `depth`. Sono state eliminate le
+classi e i file equivalenti `RGBDCapture`, `OracleStereoLabels`,
+`StereoDegradation`, `RGBDObserver`, `AdaptiveStereoExtractor`,
+`StereoCapture`, il re-export `simulated_stereo.py` e il wrapper di calibrazione
+LiDAR senza logica propria.
+
+**Perché:** Il modulo aveva due camere, due assemblatori di `SensorBundle`, due
+configurazioni sovrapposte dei disturbi, un dispatcher implicito e due observer
+distinti soltanto per la gestione della depth. Inoltre l'environment aggirava
+la camera pubblica con una seconda implementazione di cattura. Queste
+duplicazioni rendevano ambiguo quale percorso fosse quello effettivo.
+
+**File:** `physical_ai_mujoco/sensors/`, `physical_ai_mujoco/observe/`,
+`physical_ai_mujoco/envs/target_extraction.py`,
+`physical_ai_mujoco/evaluation/observe_benchmark.py`, `tests/`, `README.md`,
+`docs/SENSORS.md`, `docs/OBSERVE_TEST.md`.
+
+**Verifica:** compilazione Python completata; 59 test mirati e tutti gli 86
+test della suite passati. Restano due warning Gymnasium preesistenti sui limiti
+infiniti dello spazio `Box`.
+
+## 2026-09-18 15:34:43 — Test OSSERVA avviabili direttamente dalla loro cartella
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** I tre test `test_sensors_extended.py`, `test_simulated_stereo.py` e
+`test_observe_pipeline.py` inseriscono la radice del repository nel percorso
+Python quando sono lanciati come script e avviano pytest; il README del modulo
+documenta questa modalita.
+
+**Perché:** Il comando diretto dell'utente importava `physical_ai_mujoco` da
+`physical_ai_mujoco_internship copia` invece che da `mujoco_deploy`, causando
+`ImportError` per `TaskContext` e `DegradedObserver`. Inoltre, senza un
+`pytest.main`, un file di test avviato con Python non eseguirebbe i test.
+
+**File:** `tests/test_sensors_extended.py`, `tests/test_simulated_stereo.py`,
+`tests/test_observe_pipeline.py`, `physical_ai_mujoco/sensors/README.md`.
+
+**Verifica:** Ripetuti i tre avvii diretti con Python: rispettivamente 13,
+8 e 11 test passati nel working copy; segue verifica nella cartella Desktop.
+
+## 2026-09-18 15:21:55 — Sensori stereo, RGB-D e LiDAR con calibrazione verificabile
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Aggiunti rig geometrico indipendente, acquisizione depth, detector
+sostituibile e oracle isolato, disturbi riproducibili, nuvola di punti e stima
+geometrica, bundle con provenienza, LiDAR 2D/3D con test autonomo, perturbazione
+e stima extrinsics, confronto LiDAR-depth e curva di calibrazione. OSSERVA
+accetta un bundle RGB-D e il benchmark espone la nuova modalita `rgbd`,
+dimensioni e forma, mantenendo il percorso stereo senza depth.
+
+**Perché:** Sul report di 3 scene da 10 oggetti la stereo disturbata trovava
+solo 4/10 oggetti in media e non produceva relazioni, perché non forniva size;
+l'errore di acquisizione non era separabile da quello di ricostruzione.
+Servivano inoltre una sorgente LiDAR e prove di calibrazione richieste dal
+progetto, senza introdurre import MuJoCo fuori da `simulation/`.
+
+**File:** `physical_ai_mujoco/sensors/` (rig, capture, detector, noise,
+cloud, bundle, lidar, calibration, test visivi),
+`physical_ai_mujoco/simulation/simulator.py`,
+`physical_ai_mujoco/contracts/observation.py`,
+`physical_ai_mujoco/observe/{core,pipeline,__init__}.py`,
+`physical_ai_mujoco/evaluation/{observe_benchmark,sensor_calibration}.py`,
+`configs/observe_tests/`, `tests/test_sensors_extended.py`,
+`tests/test_architecture.py`, `README.md`, `docs/{SENSORS,OBSERVE_TEST}.md`,
+`physical_ai_mujoco/sensors/README.md` (spiegazione dall'origine del modulo).
+
+**Verifica:** Suite precedente e test nuovi passati nel working copy;
+benchmark RGB-D pulito su 3 scene da 10 oggetti: recall 0,967, errore posizione
+0,019 m, F1 supporti 0,391 (quindi il nuovo canale non corregge da solo il
+relation estimator). Verificate anteprime PNG, curva di calibrazione e
+confronto LiDAR-depth. La conta finale dei test viene riportata a consegna.
+
+## 2026-09-18 12:38:59 — Confine privilegiato e invarianti OSSERVA verificabili
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** La validazione dell'Observation e una funzione pura condivisa con il
+builder. Il benchmark registra per scena le violazioni senza ricostruire
+l'Observation, esclude gli output invalidi dalle metriche, continua con le
+altre scene, esporta un grafo diagnostico e termina con codice 1 se esistono
+violazioni. I test binari controllano il confine dei dati privilegiati e le
+invarianti strutturali.
+
+**Perché:** Prima `invariants_ok` era sempre `True` e il benchmark richiamava
+il builder sull'output gia costruito: un grafo malformato interrompeva il
+report alla prima scena, mentre il confine tra Observation e stato privilegiato
+non aveva un controllo esplicito.
+
+**File:** `physical_ai_mujoco/contracts/observation.py`,
+`physical_ai_mujoco/contracts/__init__.py`,
+`physical_ai_mujoco/observe/pipeline.py`,
+`physical_ai_mujoco/evaluation/observe_benchmark.py`,
+`tests/test_architecture.py`, `tests/test_observe_pipeline.py`,
+`tests/test_simulated_stereo.py`, `docs/OBSERVE_TEST.md`.
+
+**Verifica:** 71 test passati; prova end-to-end headless del benchmark con
+Exact, Degraded e Stereo e report JSON/DOT/SVG generati.
+
+## 2026-09-18 12:28:52 — Incertezza per oggetto visibile nel report OSSERVA
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Ogni osservazione del report salva per oggetto ID, visibilita,
+stato ricordato e qualita di detection/posa; il riepilogo conta le scene con
+`unknown_space`. La revisione visiva stampa queste informazioni. Il grafo di
+relazioni non e piu dichiarato disponibile quando OSSERVA non ha osservato
+alcun oggetto.
+
+**Perché:** I contratti di OSSERVA gia contenevano le informazioni di
+incertezza, ma il banco mostrava solo `unknown_space` e gli ID non visibili:
+non si poteva controllare la qualita per oggetto. Inoltre, nel test con due
+oggetti e disturbo stereo fisso, la stereo non ne ha ricostruito nessuno e il
+report ha mostrato erroneamente `F1=0` perche `all(...)` su una scena vuota
+restituiva `True`.
+
+**File:** `physical_ai_mujoco/evaluation/observe_benchmark.py`,
+`physical_ai_mujoco/observe/pipeline.py`, `tests/test_simulated_stereo.py`,
+`docs/OBSERVE_TEST.md`.
+
+**Verifica:** 63 test passati nella suite completa; test con drop totale
+controlla che le relazioni non siano disponibili. Report e riapertura visiva
+di una scena con due oggetti hanno mostrato i dettagli di incertezza.
+
+## 2026-09-18 12:28:51 — Disturbo stereo e numero di oggetti selezionabili nel banco
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Il menu del test OSSERVA permette di scegliere il profilo delle
+rilevazioni stereo indipendentemente da Degraded e un numero fisso o casuale
+di oggetti per scena. La CLI offre `--stereo-profile` e
+`--objects N|random` con intervallo minimo/massimo. Il test autonomo della
+camera accetta rumore dei centroidi e probabilita di drop. Il report salva il
+numero effettivo di oggetti e i parametri campionati per ogni scena; il
+riesame ricostruisce ogni scena con il conteggio salvato.
+
+**Perché:** Nel menu precedente il profilo clean/fixed/random controllava
+insieme Degraded e Stereo, quindi non si poteva confrontare una sorgente
+Degraded casuale con Stereo fissa. `object_count` restava nascosto nei JSON a
+3 oggetti. I flag del test camera non esponevano il disturbo gia presente in
+`StereoDegradation`. Le prove sim2real sui soli errori di rilevazione hanno
+effetto sul percorso OSSERVA attuale; il degrado dei pixel rimane da valutare
+quando esistera un detector che li usa.
+
+**File:** `physical_ai_mujoco/evaluation/observe_benchmark.py`,
+`physical_ai_mujoco/sensors/test_stereo_camera.py`,
+`tests/test_simulated_stereo.py`, `README.md`, `docs/OBSERVE_TEST.md`.
+
+**Verifica:** 63 test passati; il nuovo test verifica intervallo, condivisione
+della scena tra sorgenti e riproducibilita. Menu provato con Degraded random,
+Stereo fixed e 2-3 oggetti casuali; camera avviata con rumore 1 px e drop 0,1;
+report con conteggio variabile riaperto nel viewer. Restano due warning
+Gymnasium preesistenti sui limiti infiniti dell'observation space.
+
+## 2026-09-18 12:03:23 — Apertura automatica del viewer dopo il report OSSERVA
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Un run interattivo del test OSSERVA apre immediatamente la prima
+scena nel viewer MuJoCo/Gymnasium e le immagini stereo dopo avere stampato il
+report. Dopo la chiusura con `q` o Esc propone le altre scene. `--headless`
+continua a saltare la revisione.
+
+**Perché:** Nel run del 20260918_120028 il programma era fermo al prompt
+`Scena da rivedere` e non aveva aperto alcuna finestra: la scelta preventiva
+della scena nascondeva la revisione visiva appena richiesta. I due report
+20260918_114103 e 20260918_120028 hanno le prime due scene identiche; la
+variazione delle medie deriva dalle due scene aggiunte, non da una regressione
+dell'acquisizione.
+
+**File:** `physical_ai_mujoco/evaluation/observe_benchmark.py`,
+`docs/OBSERVE_TEST.md`.
+
+**Verifica:** Run interattivo con una scena: viewer e immagini stereo aperti
+automaticamente prima del prompt successivo; uscita con `0` riuscita.
+Dieci test mirati OSSERVA/stereo passati.
+
+## 2026-09-18 11:54:45 — Acquisizione stereo separata dalle etichette ideali
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** `SimulatedStereoCamera.capture()` restituisce `StereoFrame` con sole
+immagini e calibrazione. `OracleStereoLabels` aggiunge separatamente maschere,
+ID e disturbo e produce il `SensorBundle` consumato da OSSERVA. Il benchmark
+dichiara anche che l'ID del target arriva dal `TaskContext`, non da un
+classificatore visivo. Nessun riconoscitore appreso e stato aggiunto.
+
+**Perché:** La precedente camera leggeva contemporaneamente pixel, maschere
+di segmentazione e tipi ideali MuJoCo; questo nascondeva nel sensore
+l'informazione privilegiata e faceva sembrare che riconoscesse il target.
+Nel report del 20260918_114103, il target era nelle maschere di entrambe le
+viste ma non nell'output stereo: gli scarti verticali di 2,05 e 2,79 px
+superavano la soglia attuale di 2 px. Separare i passaggi rende diagnosticabile
+dove l'oggetto si perde.
+
+**File:** `physical_ai_mujoco/sensors/simulated_stereo.py`,
+`physical_ai_mujoco/sensors/oracle_stereo.py`,
+`physical_ai_mujoco/sensors/__init__.py`,
+`physical_ai_mujoco/sensors/test_stereo_camera.py`,
+`physical_ai_mujoco/evaluation/observe_benchmark.py`,
+`tests/test_simulated_stereo.py`, `docs/OBSERVE_TEST.md`.
+
+**Verifica:** 62 test passati; il test verifica esplicitamente che il frame
+grezzo non abbia maschere ne tipi. Avvio visivo della camera, benchmark e
+riesame di un report esistente riusciti dopo la separazione. Restano i due
+warning Gymnasium preesistenti sui limiti infiniti dell'observation space.
+
+## 2026-09-18 11:48:33 — Riesame visivo dei report OSSERVA
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Dopo un benchmark interattivo si puo scegliere una scena del report
+e mantenerne aperti il viewer MuJoCo/Gymnasium e le viste stereo fino a `q` o
+Esc. `--review-report` riapre un JSON precedente, `--scene` seleziona la scena
+e `--review-seconds` limita la durata; ogni riesame salva un PNG accanto ai
+grafi. ID e `[T]` nell'anteprima sono marcati come etichette ideali.
+
+**Perché:** Il viewer precedente si chiudeva dopo due secondi per scena,
+prima che l'utente potesse leggere il report terminale. Il report random
+20260918_114103 mostra recall stereo 0,5 e nessun target rilevato in due
+scene: serviva vedere immagini e scena corrispondenti per capire se la perdita
+nascesse da occlusione, maschere o triangolazione.
+
+**File:** `physical_ai_mujoco/evaluation/observe_benchmark.py`, `README.md`,
+`docs/OBSERVE_TEST.md`.
+
+**Verifica:** Menu interattivo provato con una scena, scelta e uscita; report
+preesistente riaperto con viewer e stereo; PNG diagnostico controllato;
+62 test passati nella suite completa.
+
+## 2026-09-18 11:38:32 — Avvio diretto dei due test dal percorso del file
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** I due entry point in `observe/` e `sensors/` aggiungono la radice del
+progetto al percorso degli import quando sono eseguiti come file Python. Il
+test stereo usa l'import del package anche in questa modalita.
+
+**Perché:** L'avvio `python /Users/matteopaolini/Desktop/mujoco_deploy/physical_ai_mujoco/observe/main_test_osserva.py`
+falliva con `ModuleNotFoundError: physical_ai_mujoco.evaluation.observe_benchmark`:
+Python inseriva `observe/` nel percorso degli import, mentre la prova precedente
+aveva verificato soltanto `python -m`. Lo stesso problema avrebbe riguardato
+l'import relativo del test stereo tramite percorso diretto.
+
+**File:** `physical_ai_mujoco/observe/main_test_osserva.py`,
+`physical_ai_mujoco/sensors/test_stereo_camera.py`, `docs/OBSERVE_TEST.md`.
+
+**Verifica:** Entrambi i file avviati con percorso diretto e l'interprete
+`mujoco-tirocinio`: OSSERVA ha prodotto report e due grafi su una scena;
+stereo ha aperto il viewer e salvato l'anteprima dopo un secondo. La suite
+completa di 62 test era passata prima di questa modifica agli entry point.
+
+## 2026-09-18 11:33:31 — Test OSSERVA e stereocamera separati, viewer e baseline configurabile
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** Il main del banco OSSERVA vive in `physical_ai_mujoco/observe/` e
+quello visivo della stereocamera in `physical_ai_mujoco/sensors/`; si avviano
+indipendentemente e aprono il viewer Gymnasium. Il sensore stereo consegna
+immagini monocromatiche (tre canali uguali per il contratto esistente) e usa
+`STEREO_BASELINE_M` per costruire fisicamente le due camere con la stessa
+calibrazione. Il banco OSSERVA mantiene la scelta interattiva dei profili e
+l'esportazione di report e grafi; il test camera mostra le due viste e salva
+un'anteprima PNG.
+
+**Perché:** L'avvio OSSERVA precedente offriva anche l'anteprima della camera,
+quindi i due test risultavano accoppiati; inoltre il viewer non si apriva nei
+normali run del benchmark. La distanza stereo era nel file di configurazione
+dell'environment e il render del sensore restava RGB: non consentivano la
+prova visiva autonoma e monocromatica richiesta. La voce dell'11:07:33 descrive
+il comportamento precedente, ora superato da questi ingressi separati.
+
+**File:** `physical_ai_mujoco/observe/main_test_osserva.py`,
+`physical_ai_mujoco/sensors/test_stereo_camera.py`,
+`physical_ai_mujoco/sensors/simulated_stereo.py`,
+`physical_ai_mujoco/evaluation/observe_benchmark.py`,
+`physical_ai_mujoco/envs/target_extraction.py`,
+`physical_ai_mujoco/simulation/session.py`, `tests/test_simulated_stereo.py`,
+`README.md`, `docs/OBSERVE_TEST.md`.
+
+**Verifica:** 62 test passati nella suite completa; due warning Gymnasium
+preesistenti sui limiti infiniti dell'observation space. Entrambi i nuovi
+ingressi avviati separatamente con viewer per una scena; il test camera ha
+salvato il PNG e il benchmark ha esportato JSON e sei file DOT/SVG. Un test
+controlla che cambiare baseline sposti le camere MuJoCo e aggiorni la
+calibrazione; un altro controlla l'uguaglianza dei tre canali immagine.
+
+## 2026-09-18 11:07:33 — Sorgente stereo simulata e banco di prova autonomo OSSERVA
+
+**Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.
+
+**Cosa:** La simulazione rende maschere di istanza visibili e calibrazione
+stereo; `SimulatedStereoCamera` costruisce `SensorBundle` con disturbo di
+centroide e omissione riproducibili. `main_test_osserva.py` confronta Exact,
+Degraded e Stereo su scene identiche, scegliendo profili di disturbo fisso o
+casuale; produce report JSON, grafi DOT/SVG e riepilogo a schermo. Una prova
+visiva apre il viewer Gymnasium e mostra RGB e maschere affiancate.
+
+**Perché:** Prima il ramo stereo di OSSERVA accettava soltanto maschere esterne
+e un test sintetico di triangolazione: non esisteva una sorgente che partisse
+dalle camere MuJoCo ne un percorso autonomo per misurare l'errore di OSSERVA.
+Le maschere da segmentazione mantengono sagome e occlusioni reali della scena;
+restano etichette ideali, quindi non confondono questa prova con un detector RGB.
+
+**File:** simulation/simulator.py, sensors/, contracts/observation.py,
+evaluation/observe_benchmark.py, main_test_osserva.py,
+configs/observe_tests/, tests/test_simulated_stereo.py, README.md,
+docs/OBSERVE_IMPLEMENTATION.md, docs/OBSERVE_TEST.md.
+
+**Verifica:** 61 test passati nella suite completa, con i due warning Gymnasium
+preesistenti sugli estremi infiniti dell'observation space; tre test mirati
+passati dopo la rifinitura delle metriche. Banco provato su due scene con
+disturbo casuale e 12 file DOT/SVG esportati. Prova visiva aperta con viewer
+Gymnasium e finestre stereo per un secondo; PNG delle maschere controllato.
+
+## 2026-09-17 18:17:38 — Contratto OSSERVA strutturato e sorgenti alternative
+
+**Chi:** Codex (GPT-5), su richiesta di Matteo Paolini.
+
+**Cosa:** `Observation` ora compone scena, relazioni candidate e incertezza,
+allineate per ID, frame e timestamp. La pipeline OSSERVA attraversa estrazione,
+comprensione della scena, relazioni, incertezza e builder. Sono disponibili una
+sorgente esatta, una sorgente MuJoCo degradata con seed e un ingresso stereo
+calibrato con maschere fornite da un detector. Il vettore a 17 valori per
+oggetto resta nel ramo `PrivilegedState` del PPO teacher 1A.
+
+**Perché:** Nel codice precedente `Observation` copiava 17 campi per oggetto
+dal simulatore, inclusi massa, attrito e velocità; DECIDE poteva quindi usare
+informazioni non ricavabili dalla stereo. `StereoCapture` produceva solo due
+immagini e `decision_observation()` continuava a leggere lo stato esatto.
+Questo impediva di sostituire la sorgente senza cambiare il contratto di
+DECIDE e di misurare separatamente errore percettivo, relazionale e
+incertezza. La baseline relazionale è dichiarata candidata geometrica; non
+viene presentata come il modello appreso di Li né l'incertezza iniziale come
+il belief CNABU di Marques.
+
+**File:** physical_ai_mujoco/contracts/, observe/, decide/core.py,
+envs/target_extraction.py, infrastructure/builder.py,
+infrastructure/policy_adapter.py, evaluation/evaluator.py,
+tests/test_architecture.py, tests/test_observe_pipeline.py, README.md,
+docs/OBSERVE_IMPLEMENTATION.md.
+
+**Verifica:** 58 test passati nella suite completa con accesso al display,
+inclusi quelli stereo MuJoCo, i contratti, la triangolazione su maschere
+sintetiche, il degrado riproducibile e il ramo PPO teacher. Due warning
+preesistenti di Gymnasium sui limiti infiniti dell'observation space.
+
 ## 2026-09-17 16:19:10 — Prima migrazione modulare a oggetti
 
 **Chi:** Codex (GPT-6), su richiesta di Matteo Paolini.

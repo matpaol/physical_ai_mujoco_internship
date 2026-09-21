@@ -1,8 +1,32 @@
 {
   "name": "1C · Robustezza percettiva",
-  "available": false,
-  "description": "Richiede la sorgente alternativa di osservazioni degradate.",
+  "available": true,
+  "description": "Stessa pipeline 1B con disturbi fotometrici e LiDAR randomizzati a runtime.",
   "default_decider": "ppo",
-  "operations": [],
-  "env_overrides": {}
+  "operations": ["1", "2", "3", "5"],
+  "env_overrides": {
+    "observation_mode": "sensor",
+    "components": {
+      "observer": "sensor_learned",
+      "executor": "ideal_removal"
+    },
+    "sensor_observation": {
+      "detector_confidence_threshold": 0.25,
+      "class_names": ["obstacle", "pfm_1_target"],
+      "cad_matching": true,
+      "cad_target_type_ids": ["pfm_1_target"],
+      "lidar_config": "configs/sensors/livox_avia.json",
+      "action_match_max_distance": 0.15,
+      "disturbance": {
+        "contrast_range": [0.8, 1.2],
+        "brightness_range": [-25.0, 25.0],
+        "gamma_range": [0.8, 1.2],
+        "noise_sigma_range": [0.0, 8.0],
+        "blur_probability": 0.25,
+        "lidar_distance_sigma": 0.005,
+        "lidar_angle_sigma_deg": 0.1,
+        "lidar_drop_probability": 0.1
+      }
+    }
+  }
 }

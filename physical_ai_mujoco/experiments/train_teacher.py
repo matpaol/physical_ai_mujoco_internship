@@ -39,6 +39,13 @@ import physical_ai_mujoco.envs  # noqa: E402,F401  (registra l'environment)
 USCITA_PREDEFINITA = PROJECT_ROOT / "outputs" / "modelli"
 
 
+def _training_obs_mode() -> str:
+    from physical_ai_mujoco.infrastructure.experiment import selected_profile
+
+    profile = selected_profile()
+    return "sensor" if profile is not None and profile.path.stem.lower() in {"1b", "1c"} else "state"
+
+
 def crea_env(
     oggetti: int, seed: int | None = None, magazzino: int = 0, fresche: float = 0.1
 ):
@@ -53,7 +60,7 @@ def crea_env(
     env = gym.make(
         "TargetExtraction-v0",
         disable_env_checker=True,
-        obs_mode="state",
+        obs_mode=_training_obs_mode(),
         object_count=oggetti,
         scene_pool_size=magazzino,
         fresh_scene_probability=fresche,
@@ -106,7 +113,7 @@ def valuta(scegli, oggetti: int, scene: int) -> np.ndarray:
     env = gym.make(
         "TargetExtraction-v0",
         disable_env_checker=True,
-        obs_mode="state",
+        obs_mode=_training_obs_mode(),
         object_count=oggetti,
     )
     from physical_ai_mujoco.evaluation.evaluator import PolicyEvaluator
@@ -145,10 +152,21 @@ def main() -> None:
 
     uscita = Path(argomenti.uscita)
     uscita.mkdir(parents=True, exist_ok=True)
-    nome = f"ppo_{argomenti.oggetti}oggetti_{argomenti.passi}passi"
+    from physical_ai_mujoco.infrastructure.experiment import selected_profile
+
+    profile = selected_profile()
+    phase_code = None if profile is None else profile.path.stem.lower()
+    sensor_training = phase_code in {"1b", "1c"}
+    prefix = (
+        "ppo_sensor_robust"
+        if phase_code == "1c"
+        else "ppo_sensor" if sensor_training else "ppo"
+    )
+    nome = f"{prefix}_{argomenti.oggetti}oggetti_{argomenti.passi}passi"
 
     print(
-        f"\nAlleno PPO: {argomenti.oggetti} oggetti, {argomenti.passi} passi, "
+        f"\nAlleno PPO{' sensoriale' if sensor_training else ''}: "
+        f"{argomenti.oggetti} oggetti, {argomenti.passi} passi, "
         f"{argomenti.paralleli} ambienti in parallelo, senza maschera"
     )
     if argomenti.magazzino:

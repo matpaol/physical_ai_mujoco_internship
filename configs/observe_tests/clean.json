@@ -1,0 +1,19 @@
+{
+  "name": "Sorgenti senza disturbo aggiunto",
+  "scene_count": 3,
+  "object_count": 3,
+  "seed": 42,
+  "degraded": {"position_sigma": 0.0, "drop_probability": 0.0},
+  "stereo": {"centroid_noise_px": 0.0, "drop_probability": 0.0},
+  "rgbd": {"drop_probability": 0.0, "depth_sigma": 0.0, "translation_sigma": 0.0, "rotation_sigma_deg": 0.0},
+  "fusion": {
+    "contrast_delta": 0.0,
+    "brightness_abs": 0.0,
+    "gamma_delta": 0.0,
+    "image_noise_sigma": 0.0,
+    "blur_probability": 0.0,
+    "lidar_distance_sigma": 0.0,
+    "lidar_angle_sigma_deg": 0.0,
+    "lidar_drop_probability": 0.0
+  }
+}

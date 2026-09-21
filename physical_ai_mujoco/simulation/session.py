@@ -38,6 +38,7 @@ class SceneSession:
         inputs,
         task,
         *,
+        stereo_baseline=None,
         object_count=None,
         render_mode=None,
         fixed_scene_seed=None,
@@ -53,7 +54,11 @@ class SceneSession:
         self._object_dataset = inputs.objects
         self._ground_dataset = inputs.grounds
         self._simulation_config = inputs.simulation
-        self._stereo_config = inputs.env["stereo_camera"]
+        self._stereo_config = dict(inputs.env["stereo_camera"])
+        if stereo_baseline is not None:
+            if stereo_baseline <= 0:
+                raise ValueError("La baseline stereo deve essere positiva")
+            self._stereo_config["baseline"] = float(stereo_baseline)
         self.select_target = task.select_target
         self.fixed_scene_seed = fixed_scene_seed
         self.capture_camera = capture_camera
@@ -137,10 +142,25 @@ class SceneSession:
         # il loro raggio d'ingombro non stanno in una pila e rendono
         # l'assestamento caotico.)
         rules = json.loads(json.dumps(self._scene_rules))
-        available = list(rules["object_selection"]["required_type_ids"])
-        rules["object_selection"]["required_type_ids"] = [
-            available[index % len(available)] for index in range(object_count)
-        ]
+        selection = rules["object_selection"]
+        available = list(selection["required_type_ids"])
+        target_type_id = selection.get("target_type_id")
+        if target_type_id is None:
+            selection["required_type_ids"] = [
+                available[index % len(available)] for index in range(object_count)
+            ]
+        else:
+            obstacles = [type_id for type_id in available if type_id != target_type_id]
+            if object_count > 1 and not obstacles:
+                raise ValueError("Serve almeno un tipo ostacolo oltre al target")
+            chosen = [
+                obstacles[index % len(obstacles)] for index in range(max(0, object_count - 1))
+            ]
+            # Con almeno due oggetti il target non e' mai l'ultimo a cadere:
+            # resta almeno un ostacolo sopra di lui, come nel task originale.
+            target_index = 0 if object_count < 3 else min(object_count // 2, object_count - 2)
+            chosen.insert(target_index, target_type_id)
+            selection["required_type_ids"] = chosen
 
         spawn = rules["spawn"]
         radius = self._largest_bounding_radius(
@@ -181,6 +201,10 @@ class SceneSession:
                 radius = math.sqrt(upper["radius"] ** 2 + (upper["height"] / 2.0) ** 2)
             elif shape == "sphere":
                 radius = upper["radius"]
+            elif shape == "mesh":
+                radius = math.sqrt(
+                    upper["x"] ** 2 + upper["y"] ** 2 + upper["z"] ** 2
+                ) / 2.0
             else:
                 raise ValueError(f"Forma non supportata: {shape}")
             largest = max(largest, radius)
@@ -380,7 +404,18 @@ class SceneSession:
         # qualcosa finisca sopra al target. Sceglierlo a caso dopo la caduta,
         # come si faceva prima, lasciava il target in cima in una frazione
         # notevole delle scene, e in quelle scene l'ordine non conta.
-        self.target_id = self.select_target(self._object_ids, self.np_random)
+        target_type_id = self._scene_rules["object_selection"].get("target_type_id")
+        if target_type_id is None:
+            self.target_id = self.select_target(self._object_ids, self.np_random)
+        else:
+            candidates = [
+                item.instance_id for item in scene.objects if item.type_id == target_type_id
+            ]
+            if len(candidates) != 1:
+                raise ValueError(
+                    f"Atteso un solo target {target_type_id!r}, trovati {len(candidates)}"
+                )
+            self.target_id = candidates[0]
         if self.highlight_target:
             self.simulator.set_object_color(self.target_id, TARGET_COLOUR)
 

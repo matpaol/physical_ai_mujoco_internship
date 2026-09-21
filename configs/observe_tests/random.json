@@ -1,0 +1,19 @@
+{
+  "name": "Disturbo estratto per scena",
+  "scene_count": 5,
+  "object_count": 3,
+  "seed": 42,
+  "degraded": {"position_sigma": [0.0, 0.03], "drop_probability": [0.0, 0.2]},
+  "stereo": {"centroid_noise_px": [0.0, 2.0], "drop_probability": [0.0, 0.2]},
+  "rgbd": {"drop_probability": [0.0, 0.2], "depth_sigma": [0.0, 0.004], "translation_sigma": [0.0, 0.01], "rotation_sigma_deg": [0.0, 0.5]},
+  "fusion": {
+    "contrast_delta": [0.0, 0.25],
+    "brightness_abs": [0.0, 30.0],
+    "gamma_delta": [0.0, 0.25],
+    "image_noise_sigma": [0.0, 10.0],
+    "blur_probability": [0.0, 0.4],
+    "lidar_distance_sigma": [0.0, 0.01],
+    "lidar_angle_sigma_deg": [0.0, 0.15],
+    "lidar_drop_probability": [0.0, 0.2]
+  }
+}

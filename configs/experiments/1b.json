@@ -1,8 +1,22 @@
 {
-  "name": "1B · Prima ricostruzione stereo",
-  "available": false,
-  "description": "Richiede la ricostruzione delle immagini in Observation.",
+  "name": "1B · Policy su stereo + LiDAR",
+  "available": true,
+  "description": "Detector B/N, geometria LiDAR, tracking e vettore PPO deployable.",
   "default_decider": "ppo",
-  "operations": [],
-  "env_overrides": {}
+  "operations": ["1", "2", "3", "5"],
+  "env_overrides": {
+    "observation_mode": "sensor",
+    "components": {
+      "observer": "sensor_learned",
+      "executor": "ideal_removal"
+    },
+    "sensor_observation": {
+      "detector_confidence_threshold": 0.25,
+      "class_names": ["obstacle", "pfm_1_target"],
+      "cad_matching": true,
+      "cad_target_type_ids": ["pfm_1_target"],
+      "lidar_config": "configs/sensors/livox_avia.json",
+      "action_match_max_distance": 0.15
+    }
+  }
 }

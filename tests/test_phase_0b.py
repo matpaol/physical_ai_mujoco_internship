@@ -20,7 +20,9 @@ def make_env(**kwargs):
 
 @pytest.fixture
 def env():
-    environment = make_env(obs_mode="state")
+    # Profilo di misura: deve osservare tutte le rimozioni anche quando il
+    # target fisso PFM-1 viene scelto presto dalla policy casuale.
+    environment = make_env(obs_mode="state", terminate_on_target=False)
     yield environment
     environment.close()
 
@@ -63,6 +65,9 @@ def test_image_observations_match_space(obs_mode):
         observation, _ = environment.reset(seed=0)
         assert environment.observation_space.contains(observation)
         assert observation["rgb_left"].dtype == np.uint8
+        for side in ("rgb_left", "rgb_right"):
+            np.testing.assert_array_equal(observation[side][:, :, 0], observation[side][:, :, 1])
+            np.testing.assert_array_equal(observation[side][:, :, 1], observation[side][:, :, 2])
     finally:
         environment.close()
 
@@ -118,8 +123,10 @@ def test_stereo_disparity_matches_geometry():
             simulator.get_object_state(sphere.instance_id).position
         )
 
-        left = _green_centroid(observation["rgb_left"])
-        right = _green_centroid(observation["rgb_right"])
+        masks_left = simulator.render_instance_masks("cam_left")
+        masks_right = simulator.render_instance_masks("cam_right")
+        left = _mask_centroid(masks_left[sphere.instance_id])
+        right = _mask_centroid(masks_right[sphere.instance_id])
         assert left is not None and right is not None, "sfera non visibile"
 
         camera_id = mujoco.mj_name2id(
@@ -143,11 +150,7 @@ def test_stereo_disparity_matches_geometry():
         environment.close()
 
 
-def _green_centroid(image: np.ndarray):
-    values = image.astype(int)
-    mask = (values[:, :, 1] > values[:, :, 0] + 25) & (
-        values[:, :, 1] > values[:, :, 2] + 25
-    )
+def _mask_centroid(mask: np.ndarray):
     if mask.sum() < 20:
         return None
     rows, columns = np.nonzero(mask)
@@ -550,6 +553,10 @@ def test_center_of_mass_is_offset_and_stays_inside_the_object():
 
         offsets = []
         for item in simulator.scene.objects:
+            # Per una mesh MuJoCo ricava centro di massa e inerzia dal volume
+            # STL; questo test riguarda la randomizzazione dei solidi primitivi.
+            if item.shape == "mesh":
+                continue
             body_id = mujoco.mj_name2id(
                 model, mujoco.mjtObj.mjOBJ_BODY, item.instance_id
             )
@@ -597,6 +604,8 @@ def test_uniform_objects_keep_the_compiler_derived_inertia():
             simulator = environment.unwrapped.simulator
             for item in simulator.scene.objects:
                 assert item.center_of_mass == (0.0, 0.0, 0.0)
+                if item.shape == "mesh":
+                    continue
                 body_id = mujoco.mj_name2id(
                     simulator.model, mujoco.mjtObj.mjOBJ_BODY, item.instance_id
                 )

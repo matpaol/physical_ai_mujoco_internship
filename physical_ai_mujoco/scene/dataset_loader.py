@@ -8,6 +8,9 @@ OBJECT_SIZE_FIELDS = {
     "box": {"x", "y", "z"},
     "cylinder": {"radius", "height"},
     "sphere": {"radius"},
+    # Per le mesh size_range dichiara l'ingombro metrico atteso. Non scala la
+    # mesh: serve a spawn, collision checks e descrizione percettiva.
+    "mesh": {"x", "y", "z"},
 }
 
 # "box" e' un tavolo (ha bordi), "plane" un pavimento (infinito nelle
@@ -23,6 +26,7 @@ SUPPORTED_RELEASE_MODES = {"simultaneous", "sequential"}
 
 def load_object_dataset(path: str | Path) -> dict:
     data = _load_json(path)
+    dataset_directory = Path(path).resolve().parent
     object_types = _require_list(data, "object_types")
     ids = set()
 
@@ -32,7 +36,6 @@ def load_object_dataset(path: str | Path) -> dict:
             "id",
             "shape",
             "size_range",
-            "density_range",
             "friction",
             "rgba",
         )
@@ -54,11 +57,28 @@ def load_object_dataset(path: str | Path) -> dict:
         for name, bounds in size_range.items():
             _validate_range(bounds, f"{type_id}.{name}", positive=True)
 
-        _validate_range(
-            item["density_range"],
-            f"{type_id}.density_range",
-            positive=True,
-        )
+        if shape == "mesh":
+            _require_keys(item, "mesh_file", "mesh_scale", "mass_range")
+            mesh_path = (dataset_directory / item["mesh_file"]).resolve()
+            if not mesh_path.is_file():
+                raise FileNotFoundError(f"Mesh file not found: {mesh_path}")
+            if mesh_path.suffix.lower() != ".stl":
+                raise ValueError(f"Only STL meshes are supported: {mesh_path}")
+            scale = item["mesh_scale"]
+            if not isinstance(scale, list) or len(scale) != 3:
+                raise ValueError(f"{type_id}.mesh_scale must contain three values")
+            for value in scale:
+                _validate_positive(value, f"{type_id}.mesh_scale")
+            _validate_range(item["mass_range"], f"{type_id}.mass_range", positive=True)
+            # Da qui in poi il runtime non dipende dalla directory corrente.
+            item["mesh_file"] = str(mesh_path)
+        else:
+            _require_keys(item, "density_range")
+            _validate_range(
+                item["density_range"],
+                f"{type_id}.density_range",
+                positive=True,
+            )
 
         friction = item["friction"]
         _require_keys(friction, "sliding_range", "torsional", "rolling")
@@ -150,6 +170,12 @@ def load_scene_rules(path: str | Path) -> dict:
     # I tipi possono ripetersi: la lista descrive ISTANZE, non un insieme di
     # tipi. Due "box" nella lista sono due scatole distinte, con dimensioni e
     # densita' campionate indipendentemente.
+    target_type_id = object_selection.get("target_type_id")
+    if target_type_id is not None:
+        if not isinstance(target_type_id, str) or not target_type_id:
+            raise ValueError("target_type_id must be a non-empty string")
+        if object_ids.count(target_type_id) != 1:
+            raise ValueError("target_type_id must occur exactly once in required_type_ids")
 
     spawn = data["spawn"]
     _require_keys(
@@ -232,6 +258,9 @@ def validate_references(
     if missing_objects:
         names = ", ".join(sorted(missing_objects))
         raise ValueError(f"Unknown object type ids: {names}")
+    target_type_id = scene_rules["object_selection"].get("target_type_id")
+    if target_type_id is not None and target_type_id not in object_ids:
+        raise ValueError(f"Unknown target type id: {target_type_id}")
 
     ground_ids = {item["id"] for item in ground_dataset["ground_types"]}
     ground_id = scene_rules["ground_selection"]["type_id"]
@@ -307,4 +336,3 @@ def _validate_non_negative(value: float, name: str) -> None:
     _validate_number(value, name)
     if value < 0:
         raise ValueError(f"{name} must be non-negative")
-

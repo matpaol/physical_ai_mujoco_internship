@@ -17,3 +17,7 @@ outputs/
 _to_delete/
 *.zip
 
+
+# generati/log locali
+MUJOCO_LOG.TXT
+datasets/generated/

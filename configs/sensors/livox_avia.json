@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "model": "Livox AVIA",
+  "scan_model": "uniform_grid_approximation",
+  "manufacturer_specs": {
+    "fov_horizontal_deg": 70.4,
+    "fov_vertical_deg": 77.2,
+    "minimum_point_rate_hz": 240000
+  },
+  "simulation_sampling": {
+    "n_rays": 360,
+    "n_planes": 64,
+    "fov_horizontal_deg": 70.4,
+    "fov_vertical_deg": 77.2,
+    "max_range": 2.0
+  },
+  "mounting": {
+    "origin": [0.0, -0.55, 0.25],
+    "rotation": [
+      [0.0, -1.0, 0.0],
+      [1.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ]
+  }
+}

@@ -138,9 +138,14 @@ def run_episode(
 
     while not done:
         action = int(scegli(env, info, generator, observation))
-        name = inner.simulator.scene.objects[action].instance_id
+        if inner.obs_mode == "sensor":
+            slots = inner._latest_encoded.slot_ids
+            name = slots[action] or f"slot_{action}"
+        else:
+            name = inner.simulator.scene.objects[action].instance_id
 
         observation, reward, terminated, truncated, info = env.step(action)
+        name = info.get("selected_object_id") or name
         total_reward += reward
         step_number += 1
 

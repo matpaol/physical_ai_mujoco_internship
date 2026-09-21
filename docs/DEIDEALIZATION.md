@@ -49,15 +49,17 @@ target immediato, altezza e ordine ottimo.
 
 ### 1B - prima percezione stereo
 
-OBSERVE acquisisce la stereo simulata e una prima ricostruzione. La pipeline
-produce la stessa Observation concettuale consumata da DECIDE. Il
+OBSERVE acquisisce camera B/N e LiDAR, segmenta, stabilizza gli ID, localizza
+in 3D e completa la PFM-1 con il CAD quando possibile. La pipeline produce una
+`Observation` codificata a slot fissi per PPO. Il
 PrivilegedState MuJoCo rimane disponibile soltanto come riferimento per
 misurare l'errore percettivo.
 
 ### 1C - robustezza sensoriale
 
-OBSERVE aggiunge una sorgente alternativa di osservazioni degradate. DECIDE si
-addestra su errori controllati e viene valutato anche sull'uscita della stereo.
+La stessa `SimulatedSensorSource` applica a runtime disturbi fotometrici,
+dropout ed errori LiDAR riproducibili. DECIDE puo quindi addestrarsi su errori
+controllati senza cambiare contratto.
 
 ### 2 - manipolatore simulato
 
@@ -97,8 +99,8 @@ reali. DECIDE e i contratti centrali non vengono riscritti.
 |---|---|---|---|
 | 0B | ExactObserver | RandomDecider | IdealRemovalExecutor |
 | 1A | ExactObserver | TeacherDecider | IdealRemovalExecutor |
-| 1B | SimulatedStereoObserver | TeacherDecider | IdealRemovalExecutor |
-| 1C | Degraded/SimulatedStereoObserver | RobustDecider | IdealRemovalExecutor |
+| 1B | SensorObserver + encoder | PPO sensoriale | IdealRemovalExecutor |
+| 1C | SensorObserver disturbato + encoder | PPO sensoriale robusto | IdealRemovalExecutor |
 | 2 | SimulatedStereoObserver | RobustDecider | SimulatedUR5Executor |
 | 6 | RealStereoObserver | policy trasferita/adattata | RealUR5Executor |
 
@@ -112,4 +114,3 @@ Una fase puo essere dichiarata completata soltanto se:
 - configurazione, seed, versione del codice e artefatti sono registrati;
 - la perdita o il guadagno rispetto alla fase precedente e quantificato;
 - e possibile attribuire il cambiamento all'idealizzazione rimossa.
-

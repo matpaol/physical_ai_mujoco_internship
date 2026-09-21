@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import numpy as np
-from physical_ai_mujoco.decide import Decider
+from physical_ai_mujoco.decide import Decider, PPODecider
 
 
 @dataclass(frozen=True)
@@ -25,13 +25,20 @@ class PolicyEvaluator:
             total = 0.0
             terminated = truncated = False
             while not (terminated or truncated):
-                if isinstance(decider, Decider):
+                if isinstance(decider, PPODecider):
+                    action = decider.predict_index(env.unwrapped._state_observation())
+                elif isinstance(decider, Decider):
                     decision = decider.decide(env.unwrapped.decision_observation())
                     action = env.unwrapped.action_index(decision)
                 else:
                     action = int(decider(env, info, rng, observation))
-                actions.append(env.unwrapped.object_ids[action])
+                if env.unwrapped.obs_mode == "sensor":
+                    slots = env.unwrapped._latest_encoded.slot_ids
+                    selected = slots[action]
+                else:
+                    selected = env.unwrapped.object_ids[action]
                 observation, reward, terminated, truncated, info = env.step(action)
+                actions.append(info.get("selected_object_id") or selected or f"slot_{action}")
                 total += reward
             results.append(
                 EpisodeResult(

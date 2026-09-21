@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 import numpy as np
 
+from .observation import Observation
+
 STATE_FEATURES_PER_OBJECT = 17
 
 
@@ -20,16 +22,13 @@ class ObjectObservation:
 
 
 @dataclass(frozen=True)
-class Observation:
-    """Stima disponibile a DECIDE, ordinata secondo gli slot delle azioni.
-
-    In 0B/1A coincide con la lettura esatta. In 1B questi campi saranno
-    stimati: il contratto percettivo definitivo richiede la fase 1B.
-    """
+class PrivilegedState:
+    """Verita' simulata per teacher, supervisione e valutazione."""
 
     objects: tuple[ObjectObservation, ...]
 
     def as_vector(self) -> np.ndarray:
+        """Codifica storica a 17 valori, riservata al teacher 1A."""
         return np.asarray(
             [
                 v
@@ -47,17 +46,6 @@ class Observation:
             ],
             dtype=np.float32,
         )
-
-    def action_index(self, decision: "ObjectDecision") -> int:
-        return tuple(o.object_id for o in self.objects).index(decision.object_id)
-
-
-@dataclass(frozen=True)
-class PrivilegedState:
-    """Verita simulata per supervisione e valutazione, distinta da Observation."""
-
-    objects: tuple[ObjectObservation, ...]
-
 
 @dataclass(frozen=True)
 class ObjectDecision:

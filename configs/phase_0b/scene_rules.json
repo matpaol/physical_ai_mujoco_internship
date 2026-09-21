@@ -4,12 +4,13 @@
     "type_id": "floor_infinite"
   },
   "object_selection": {
+    "target_type_id": "pfm_1_target",
     "required_type_ids": [
       "slab",
       "disc",
+      "pfm_1_target",
       "plank",
       "slab",
-      "box",
       "disc"
     ]
   },

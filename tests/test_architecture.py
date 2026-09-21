@@ -10,10 +10,16 @@ import pytest
 from physical_ai_mujoco.contracts import (
     ObjectObservation,
     Observation,
+    PrivilegedState,
+    SceneObject,
+    SceneState,
+    PhysicalRelationState,
+    ObjectUncertainty,
+    UncertaintyState,
     ObjectDecision,
     ExecutionOutcome,
 )
-from physical_ai_mujoco.decide import HighestObjectDecider, RandomDecider, PPODecider
+from physical_ai_mujoco.decide import Decider, HighestObjectDecider, RandomDecider, PPODecider
 from physical_ai_mujoco.execute import Executor
 from physical_ai_mujoco.observe import ExactObserver
 from physical_ai_mujoco.task import TargetExtractionTask
@@ -23,45 +29,44 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def sample_observation():
     def obj(name, z, present=True, target=False):
-        return ObjectObservation(
-            name,
-            (0.0, 0.0, z),
-            (1.0, 0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0),
-            (0.0, 0.0, 0.0),
-            1.0,
-            0.5,
-            present,
-            target,
+        return SceneObject(
+            name, "target" if target else "obstacle", "box",
+            (0.0, 0.0, z) if present else None,
+            (1.0, 0.0, 0.0, 0.0) if present else None,
+            "box", (0.1, 0.1, 0.1), present, 1.0 if present else None,
         )
 
+    objects = (
+        obj("buried", 0.1, target=True),
+        obj("highest", 0.4),
+        obj("removed", 10.0, False),
+    )
     return Observation(
-        (
-            obj("buried", 0.1, target=True),
-            obj("highest", 0.4),
-            obj("removed", 10.0, False),
-        )
+        SceneState(objects, "buried", 0.0, None, "world", 0.0),
+        PhysicalRelationState(tuple(o.object_id for o in objects), (), "test", True, "world", 0.0),
+        UncertaintyState(tuple(ObjectUncertainty(o.object_id, o.present, 1.0, 1.0) for o in objects), False, "test", "world", 0.0),
     )
 
 
 def test_deciders_use_data_and_preserve_ties_and_random_sequence():
     observation = sample_observation()
     assert HighestObjectDecider().decide(observation).object_id == "highest"
-    tied = Observation(
-        tuple(replace(o, position=(0, 0, 0.1)) for o in observation.objects)
-    )
+    tied = replace(observation, scene=replace(
+        observation.scene,
+        objects=tuple(replace(o, position=(0, 0, 0.1)) for o in observation.objects),
+    ))
     assert HighestObjectDecider().decide(tied).object_id == "buried"
     expected = np.random.default_rng(18)
     policy = RandomDecider(np.random.default_rng(18))
     for _ in range(20):
         decision = policy.decide(observation)
-        assert observation.action_index(decision) == int(expected.choice([0, 1]))
+        assert tuple(o.object_id for o in observation.objects).index(decision.object_id) == int(expected.choice([0, 1]))
     with pytest.raises(ValueError):
-        HighestObjectDecider().decide(Observation(()))
+        HighestObjectDecider().decide(replace(observation, scene=replace(observation.scene, objects=())))
 
 
 def test_contract_and_policy_modules_do_not_import_backend_or_environment():
-    for folder in ("contracts", "decide", "task"):
+    for folder in ("contracts", "decide", "task", "observe"):
         for path in (ROOT / "physical_ai_mujoco" / folder).glob("*.py"):
             for node in ast.walk(ast.parse(path.read_text())):
                 imports = []
@@ -81,6 +86,34 @@ def test_contract_and_policy_modules_do_not_import_backend_or_environment():
                             "scripts",
                         )
                     ), (path, module)
+
+
+def test_sensor_implementations_do_not_import_mujoco():
+    for path in (ROOT / "physical_ai_mujoco" / "sensors").rglob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            assert not any(name == "mujoco" or name.startswith("mujoco.") for name in names), path
+
+
+def test_shared_contracts_do_not_depend_on_sensor_implementations():
+    for path in (ROOT / "physical_ai_mujoco" / "contracts").glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            assert not any(
+                name == "physical_ai_mujoco.sensors"
+                or name.startswith("physical_ai_mujoco.sensors.")
+                for name in names
+            ), (path, names)
 
 
 def make_task(**overrides):
@@ -155,8 +188,9 @@ def test_env_delegates_to_replaceable_objects_and_keeps_public_action_mapping():
         old, info = env.reset(seed=2)
         action = env.unwrapped.action_index(ObjectDecision(info["target_id"]))
         obs, reward, terminated, truncated, info = env.step(action)
+        env.unwrapped.decision_observation()
         assert executor.calls == 1
-        assert observer.calls >= 2
+        assert observer.calls >= 1
         np.testing.assert_array_equal(old, obs)
         assert info["invalid_action"] and reward < 0 and not terminated
     finally:
@@ -177,7 +211,7 @@ def test_episode_snapshot_restores_visibility_and_task():
         env.unwrapped.restore(snapshot)
         np.testing.assert_array_equal(colors, simulator.model.geom_rgba)
         np.testing.assert_array_equal(
-            before, env.unwrapped.decision_observation().as_vector()
+            before, env.unwrapped._state_observation()
         )
         assert env.unwrapped.action_masks().all()
         assert env.unwrapped.task_rules.total_disturbance == 0
@@ -194,15 +228,24 @@ def test_ppo_normalizes_and_does_not_mask_invalid_actions():
 
         def predict(self, vector, deterministic):
             assert deterministic
-            np.testing.assert_array_equal(vector, sample_observation().as_vector() * 2)
+            np.testing.assert_array_equal(vector, privileged.as_vector() * 2)
             return 2, None
 
     class Normalizer:
         def normalize_obs(self, vector):
             return vector * 2
 
+    privileged = PrivilegedState(tuple(
+        ObjectObservation(o.object_id, o.position or (0, 0, 0),
+                          (1, 0, 0, 0), (0, 0, 0), (0, 0, 0),
+                          1.0, 0.5, o.present, o.is_target)
+        for o in sample_observation().objects
+    ))
     policy = PPODecider(Model(), Normalizer())
-    assert policy.decide(sample_observation()).object_id == "removed"
+    assert policy.predict_index(privileged.as_vector()) == 2
+    assert not isinstance(policy, Decider)
+    with pytest.raises(TypeError, match="teacher"):
+        policy.decide(sample_observation())
     with pytest.raises(ValueError, match="numero di oggetti"):
         policy.predict_index(np.zeros(17))
 
