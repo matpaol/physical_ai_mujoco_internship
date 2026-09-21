@@ -58,6 +58,209 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-21 21:06:17 — Guida ai comandi per l'addestramento del visore
+
+**Chi:** Claude (claude-opus-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Solo documentazione, nessun cambiamento di comportamento. Nuovo
+`docs/ADDESTRAMENTO_VISORE.md`: prova veloce, generazione del dataset,
+training (Mac M3 / GPU NVIDIA), valutazione per % di target visibile con tutte
+le opzioni e come leggerne l'output, uso del modello nel benchmark di OSSERVA
+(`--weights`), fine-tuning sulle foto reali, come fare un esperimento nuovo,
+problemi frequenti. Una riga in `physical_ai_mujoco/vision_training/README.md`
+rimanda alla guida.
+
+**Perché:** Matteo ha chiesto un file specifico per il visore con i comandi da
+lanciare e le ricette da usare: il README del pacchetto spiega il perché delle
+scelte, ma per rilanciare dataset, training e valutazione fra un mese servono i
+comandi esatti, le opzioni e dove finiscono i risultati in un solo posto.
+
+**File:** `docs/ADDESTRAMENTO_VISORE.md` (nuovo),
+`physical_ai_mujoco/vision_training/README.md` (una riga di rimando).
+
+**Verifica:** comandi e opzioni confrontati con gli `argparse` di
+`vision_training/dataset.py`, `training.py`, `evaluation.py`,
+`evaluation/observe_benchmark.py` e con le ricette in
+`configs/vision_training/`; formato dell'output di valutazione preso da
+`evaluation.format_report`. Tempi di generazione dal run di `sim_dr_v1` del
+2026-09-21 (1437,6 s). Nessun test da rilanciare: non cambia codice.
+
+## 2026-09-21 20:58:21 — Documentazione del visore e collegamento con i documenti di progetto
+
+**Chi:** Claude (claude-opus-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Solo documentazione, nessun cambiamento di comportamento. Nuovo
+`physical_ai_mujoco/vision_training/README.md` (ciclo, mappa dei file, uso,
+ricette, output, manutenzione, limiti, checklist). Aggiornati
+`docs/OBSERVE_TEST.md` (ricette, menu 5, soglia di osservabilità),
+`docs/SENSOR_COMPLETION_STATUS.md` (il training del detector ora esiste),
+`docs/OBSERVE_IMPLEMENTATION.md` (rimandi) e `docs/ARCHITECTURE.md` (sezione
+VISION_TRAINING). Fuori dal repo, con i rispettivi storici:
+`software_architecture/observa.md` v11 (mappa blocchi → codice e quattro
+scostamenti), `software_architecture/02_decisioni.md` v21 (D46),
+`service_documents/03_stato.md` v13, `service_documents/05_tesi_appunti.md` v10.
+
+**Perché:** Il modulo del visore non aveva documentazione d'uso, e i documenti
+del repo dicevano ancora che il training del detector non era implementato.
+Matteo ha chiesto di poter capire fra un mese come e' collegato, come si
+lancia e come si mantiene.
+
+**File:** vedi *Cosa*.
+
+**Verifica:** controllati a mano i comandi e i percorsi citati nel README
+contro il codice e contro i run fatti sul Mac il 21/09; nessun test da
+rilanciare perche' non cambia codice.
+
+## 2026-09-21 20:22:45 — Ricetta di fine-tuning reale: ottimizzatore esplicito
+
+**Chi:** Claude (claude-opus-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** `training_real_finetune_v1.json` dichiara `"optimizer": "AdamW"`.
+
+**Perché:** Il primo training sul Mac (ricetta `smoke`, Ultralytics 8.4.156)
+ha stampato «optimizer=auto found, ignoring 'lr0'»: con l'ottimizzatore
+automatico il learning rate della ricetta viene scartato. Per il fine-tuning
+sulle foto reali il learning rate basso (0.001) è la scelta che evita di
+cancellare quanto appreso in simulazione, quindi deve valere davvero.
+
+**File:** `configs/vision_training/training_real_finetune_v1.json`.
+
+**Verifica:** JSON valido; la ricetta non è ancora eseguibile (manca il
+dataset reale), quindi l'effetto sul learning rate non è stato osservato.
+
+## 2026-09-21 20:19:08 — `vision_training`: la vista senza target non dipende piu' dalla randomizzazione
+
+**Chi:** Claude (claude-opus-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** L'estrazione "questa vista e' senza target" usa un flusso casuale
+proprio (`STREAM_ABSENT`) invece di quello delle condizioni visive. Ricette che
+differiscono solo per la randomizzazione tolgono ora il target dalle stesse
+viste. Restano possibili differenze nelle viste extra "poco visibile", perche'
+dipendono dalla visibilita' misurata, che a sua volta dipende dalla camera.
+
+**Perche':** Sul Mac, `smoke` (con randomizzazione) aveva 0 viste senza target
+nello split val, la stessa ricetta senza randomizzazione ne aveva 2: togliendo
+la randomizzazione non si consumavano estrazioni e cambiava l'esito. Il
+confronto scena per scena fra `sim_dr_v1` e `sim_nodr_v1` promesso nella voce
+precedente non era quindi vero.
+
+**File:** `physical_ai_mujoco/vision_training/randomization.py`,
+`physical_ai_mujoco/vision_training/dataset.py`, `tests/test_vision_training.py`.
+
+**Verifica:** nuovo test che genera la stessa ricetta con e senza
+randomizzazione (3 scene, 50% di viste senza target) e confronta la presenza
+del target immagine per immagine; suite completa: 158 test passati
+(container Linux, Python 3.12.3, MuJoCo 3.13.0).
+
+## 2026-09-21 17:47:25 — Modulo `vision_training`: addestramento del visore da ricette, domain randomization e soglia di osservabilità misurata
+
+**Chi:** Claude (claude-opus-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:**
+
+- Nuovo pacchetto `physical_ai_mujoco/vision_training/` che sostituisce
+  `experiments/synthetic_dataset.py` e `experiments/train_detector.py` (rimossi,
+  il codice è stato spostato, non duplicato). Tutto parte da **ricette JSON** in
+  `configs/vision_training/`: `dataset_*.json` (scene, split, randomizzazione) e
+  `training_*.json` (modello di partenza, epoche, device). Le chiavi sconosciute
+  sono un errore.
+- **Dataset**: split per scena in train/val/**test** (il test non è mai visto in
+  addestramento); più viste per scena; una quota di viste senza target
+  (negativi); viste extra quando il target è poco visibile; la **% di sagoma
+  visibile** del target è scritta in ogni annotazione, sempre. Le annotazioni
+  JSON su disco ora contengono tutti i campi (prima solo il manifest li aveva).
+- **Domain randomization** (solo se la ricetta la chiede): camera (posizione,
+  punto guardato, rollio, fov), luce principale e headlight, terreno (scacchi,
+  tinta unita, macchie a rumore; riflessione), sfondo, colore degli ostacoli e
+  del target (tavolozza PFM-1), disturbi immagine su tutte le immagini
+  (contrasto, luminosità, gamma, rumore, blur, vignettatura). Ogni aspetto ha
+  il suo flusso casuale, derivato da (seed, scopo, scena, vista).
+- `simulation/visual_conditions.py` (solo dati) e
+  `Simulator.apply_visual_conditions(...)`: l'aspetto cambia sul modello già
+  compilato; fisica e maschere non cambiano. `stereo_calibration()` legge ora
+  il fov dal modello (identico al nominale senza randomizzazione).
+- `Simulator.hold_object/release_object` e
+  `place_target_at_immersion(..., settle_others=True)`: dopo aver interrato il
+  target, il resto della pila ricade e si assesta. Il default resta `False`.
+- `evaluation/target_exposure.measure_target_visibility`: pixel visibili /
+  pixel del target da solo e non interrato, nella stessa posa, senza modificare
+  la scena (compenetrazione di contatto sotto 2 mm non conta come interramento).
+- **Training** (`vision_training/training.py`): device automatico CUDA → MPS →
+  CPU; `data.yaml` riscritto con il percorso vero al momento del training;
+  **scheda del modello** `<nome>.json` sempre scritta accanto ai pesi (ricetta,
+  riassunto dataset, modello genitore, versioni, commit git, metriche); rifiuta
+  di sovrascrivere un esperimento. Il modello di partenza può essere un nostro
+  `.pt` (fine-tuning sulle immagini reali: `training_real_finetune_v1.json`).
+- **Valutazione** (`vision_training/evaluation.py`): richiamo del target per
+  fasce di % visibile, falsi positivi sulle viste senza target, richiamo per
+  numero di oggetti e **% minima riconoscibile** (fascia più bassa da cui in su
+  il richiamo è ≥ 80%, IoU ≥ 0.5). Il valore finisce nella scheda.
+- **Benchmark OSSERVA**: `target_observable` non è più "almeno un pixel del
+  target in immagine", ma `% visibile ≥ soglia`. La soglia viene dalla scheda
+  del modello se misurata, altrimenti dal profilo
+  (`target_observable_min_visible_fraction: 0.05`), altrimenti dal default
+  0.05; il report dice quale. La curva per fasce di visibilità è ora popolata
+  in ogni benchmark, non solo negli esperimenti di immersione.
+- Menu del laboratorio OSSERVA: 2 e 3 scelgono una ricetta; nuova voce 5
+  "Valuta il detector per % di target visibile". Nuova suite di test `visore`.
+
+**Perché:**
+
+- Il benchmark `fusion_learned` del 2026-09-21 16:46 (4 scene, 3–8 oggetti)
+  dava richiamo del target 25% e F1 supporti 0.30. Il modello attivo
+  `pfm_1_seg_immersed_v2.pt` era stato addestrato su 80 scene, 346 immagini,
+  **1–6 oggetti**: le due scene in cui il target non è mai stato trovato avevano
+  7 e 8 oggetti, fuori distribuzione.
+- `target_observable` era `truth.any()`: uno spiraglio di un pixel bastava a
+  contare come "osservabile" un target che a occhio era sepolto (scena 1 dello
+  stesso run). La misura più corretta esisteva (`camera_visible_fraction`) ma
+  si calcolava solo negli esperimenti di immersione: nel benchmark generico la
+  curva per fasce era vuota (tutte le fasce con `scene_count: 0`).
+- Il modello attivo non aveva scheda (`.json` assente, cartella di training
+  assente) e il suo `data.yaml` puntava a
+  `/Users/matteopaolini/Documents/Codex/.../pfm_1_dataset_immersed_v2`: non era
+  né riaddestrabile così com'era né ricostruibile dal menu, che chiedeva solo
+  scene, oggetti e seed.
+- Nessuna randomizzazione visiva: camera fissa (stessa posa, fov 50°), una sola
+  luce, pavimento sempre a scacchi, target sempre dello stesso grigio. Per il
+  sim2real (pre-training in simulazione, poi fine-tuning su foto reali) il
+  detector non deve poter imparare lo sfondo o una tonalità fissa.
+- Interrando il target senza fisica, gli oggetti che gli poggiavano sopra
+  restavano sospesi e le loro ombre indicavano dove stava il target.
+
+**File:** `physical_ai_mujoco/vision_training/` (nuovo: `__init__`, `recipe`,
+`randomization`, `labels`, `dataset`, `training`, `evaluation`),
+`physical_ai_mujoco/simulation/visual_conditions.py` (nuovo),
+`physical_ai_mujoco/simulation/simulator.py`,
+`physical_ai_mujoco/evaluation/target_exposure.py`,
+`physical_ai_mujoco/evaluation/observe_benchmark.py`,
+`physical_ai_mujoco/observe/main_test_osserva.py`,
+`physical_ai_mujoco/experiments/synthetic_dataset.py` (rimosso),
+`physical_ai_mujoco/experiments/train_detector.py` (rimosso),
+`scripts/genera_dataset_target.py`, `scripts/train_detector.py`,
+`configs/vision_training/` (nuovo, 7 ricette),
+`configs/observe_tests/{clean,fixed,random}.json`,
+`tests/test_vision_training.py` (nuovo), `tests/test_learned_detector.py`,
+`tests/test_observe_menu.py`, `tests/test_architecture.py`, `tests/suites.py`,
+`tests/README.md`.
+
+**Verifica:**
+
+- Suite completa: **157 test passati** (prima delle modifiche: 139), in un
+  container Linux con Python 3.12.3, MuJoCo 3.13.0 e rendering OSMesa. I test
+  di Fase 0A passano invariati.
+- Nuovi test architetturali: `vision_training/` non importa `mujoco`;
+  `visual_conditions.py` è solo dati.
+- Generazione della ricetta `dataset_smoke` (6 scene, 2–6 oggetti): 9 s, 3
+  split, immagini ispezionate a vista.
+- Benchmark `fusion_oracle` su 3 scene: curva per fasce popolata (nascosto,
+  70–80%, 90–100%) e soglia riportata con la sua fonte.
+- **Non verificato:** training reale con Ultralytics/PyTorch (non installabile
+  nel container: `download.pytorch.org` bloccato dal proxy; il training è
+  testato con un finto YOLO), training su MPS del Mac M3, tempi del dataset
+  completo `sim_dr_v1` (800 scene), comportamento con la versione di MuJoCo
+  dell'ambiente conda `mujoco-tirocinio`.
+
 ## 2026-09-21 11:26:00 — Menu test modulare, scena riproducibile e diagnostica CAD
 
 **Chi:** Codex (GPT-5), su richiesta di Matteo Paolini.

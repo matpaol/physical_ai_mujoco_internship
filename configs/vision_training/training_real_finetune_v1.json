@@ -1,0 +1,15 @@
+{
+  "kind": "training",
+  "name": "real_finetune_v1",
+  "description": "MODELLO PER IL SIM2REAL, da usare quando esistera' il dataset reale etichettato: parte dai pesi pre-addestrati in simulazione, congela i primi 10 blocchi e usa un learning rate basso per non dimenticare quanto appreso in sim.",
+  "dataset": "datasets/real/pfm1_real_v1",
+  "base_model": "outputs/detector_weights/sim_dr_v1_m3.pt",
+  "epochs": 60,
+  "image_size": 640,
+  "batch": 8,
+  "patience": 15,
+  "seed": 0,
+  "device": "auto",
+  "ultralytics": {"hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": 0.3, "optimizer": "AdamW", "lr0": 0.001, "freeze": 10, "workers": 4},
+  "evaluation": {"split": "test", "iou_threshold": 0.5, "confidence": 0.25, "band_width": 0.1, "required_recall": 0.8, "min_samples_per_band": 5}
+}

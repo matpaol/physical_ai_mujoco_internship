@@ -1,6 +1,9 @@
-"""Comando leggero per generare immagini e maschere sintetiche della PFM-1."""
+"""Comando leggero: genera un dataset del visore da una ricetta.
 
-from physical_ai_mujoco.experiments.synthetic_dataset import main
+    python -m scripts.genera_dataset_target configs/vision_training/dataset_sim_dr_v1.json
+"""
+
+from physical_ai_mujoco.vision_training.dataset import main
 
 
 if __name__ == "__main__":

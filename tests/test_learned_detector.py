@@ -1,4 +1,7 @@
-"""Dataset sintetico e adapter del detector appreso."""
+"""Adapter del detector appreso e metriche visive del benchmark.
+
+Generazione del dataset e training sono testati in `test_vision_training.py`.
+"""
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -21,15 +24,6 @@ from physical_ai_mujoco.evaluation.observe_benchmark import (
     _target_exposure_curve,
     measure_observation,
 )
-from physical_ai_mujoco.experiments.synthetic_dataset import (
-    DatasetGenerationConfig,
-    _prepare_directory,
-    _object_count_for_scene,
-    _validation_indices,
-    _write_sample,
-    mask_to_yolo_segments,
-)
-from physical_ai_mujoco.experiments.train_detector import DetectorTrainingConfig
 from physical_ai_mujoco.sensors import LearnedDetector, SegmentationPrediction
 from physical_ai_mujoco.sensors import ImageDisturbance, apply_image_disturbance
 
@@ -47,27 +41,6 @@ def _frame() -> StereoFrame:
     )
 
 
-def test_mask_export_is_normalized_and_dataset_split_is_by_scene():
-    mask = np.zeros((10, 20), dtype=bool)
-    mask[2:8, 4:16] = True
-    segments = mask_to_yolo_segments(mask)
-    assert len(segments) == 1
-    assert len(segments[0]) >= 8
-    assert all(0 <= value <= 1 for value in segments[0])
-
-    config = DatasetGenerationConfig(scene_count=10, validation_fraction=0.2, seed=7)
-    first = _validation_indices(config)
-    assert first == _validation_indices(config)
-    assert len(first) == 2
-    assert first < set(range(config.scene_count))
-    variable = DatasetGenerationConfig(scene_count=5, object_count=(2, 6), seed=7)
-    counts = [_object_count_for_scene(variable, index) for index in range(5)]
-    assert counts == [_object_count_for_scene(variable, index) for index in range(5)]
-    assert all(2 <= value <= 6 for value in counts)
-    with pytest.raises(ValueError, match="target_immersion_range"):
-        DatasetGenerationConfig(target_immersion_range=(0.8, 0.2))
-
-
 def test_image_disturbance_is_seeded_and_preserves_monochrome_shape():
     image = np.full((20, 30), 120, dtype=np.uint8)
     policy = ImageDisturbance(blur_probability=1.0)
@@ -78,31 +51,6 @@ def test_image_disturbance_is_seeded_and_preserves_monochrome_shape():
     assert not np.array_equal(first, image)
     with pytest.raises(ValueError, match="blur_kernel"):
         ImageDisturbance(blur_kernel=2)
-
-
-def test_lossless_masks_json_and_yolo_labels_are_written_together(tmp_path):
-    destination = tmp_path / "dataset"
-    _prepare_directory(destination)
-    target = np.zeros((12, 16), dtype=bool)
-    target[2:8, 3:10] = True
-    obstacle = np.zeros_like(target)
-    obstacle[7:11, 10:15] = True
-    annotation = _write_sample(
-        destination,
-        "train",
-        "sample",
-        np.zeros(target.shape, dtype=np.uint8),
-        {"target": target, "other": obstacle},
-        {"target": "pfm_1_target", "other": "slab"},
-        "pfm_1_target",
-        3,
-    )
-    assert (destination / "images/train/sample.png").is_file()
-    assert all((destination / item["mask"]).is_file() for item in annotation["instances"])
-    labels = (destination / "labels/train/sample.txt").read_text().splitlines()
-    assert {line.split()[0] for line in labels} == {"0", "1"}
-    with pytest.raises(FileExistsError, match="non e' vuota"):
-        _prepare_directory(destination)
 
 
 class _Backend:
@@ -134,11 +82,6 @@ def test_learned_detector_reports_missing_weights_before_optional_import(tmp_pat
         LearnedDetector(weights_path=tmp_path / "missing.pt")
     with pytest.raises(ValueError, match="weights_path"):
         LearnedDetector()
-    with pytest.raises(FileNotFoundError, match="Dataset YAML"):
-        DetectorTrainingConfig(
-            dataset_yaml=tmp_path / "missing.yaml",
-            destination=tmp_path / "weights.pt",
-        ).validate()
 
 
 def test_benchmark_matches_learned_track_ids_only_inside_evaluation():

@@ -10,8 +10,23 @@ from physical_ai_mujoco.scene.scene_description import (
     SceneDescription,
     bounding_radius,
 )
-from physical_ai_mujoco.simulation.mujoco_builder import build_model
+from physical_ai_mujoco.simulation.mujoco_builder import _camera_axes, build_model
+from physical_ai_mujoco.simulation.visual_conditions import (
+    BackgroundAppearance,
+    CameraPerturbation,
+    GroundAppearance,
+    LightingConditions,
+    VisualConditions,
+)
 
+
+# Nomi degli elementi visivi dell'MJCF (vedi mujoco_builder.build_mjcf).
+MAIN_LIGHT = "sole"
+GROUND_GEOM = "ground_geom"
+GROUND_MATERIAL = "mat_piano"
+GROUND_TEXTURE = "griglia"
+BACKGROUND_TEXTURE = "skybox"
+STEREO_CAMERAS = (("cam_left", -1.0), ("cam_right", +1.0))
 
 # Posizione dove vengono "parcheggiati" gli oggetti rimossi: fuori dal campo
 # visivo di qualsiasi camera ragionevole e senza contatti attivi.
@@ -73,6 +88,8 @@ class Simulator:
             for item in scene.objects
         }
         self._removed: set[str] = set()
+        # Oggetti tenuti fermi nella posa corrente mentre il resto si assesta.
+        self._held: dict[str, tuple[np.ndarray, np.ndarray]] = {}
         self._renderer: mujoco.Renderer | None = None
 
         # Copie di riferimento per poter annullare le rimozioni in reset().
@@ -80,6 +97,8 @@ class Simulator:
         self._initial_contype = self.model.geom_contype.copy()
         self._initial_conaffinity = self.model.geom_conaffinity.copy()
         self._initial_rgba = self.model.geom_rgba.copy()
+        # Aspetto nominale salvato al primo cambio visivo, per poterlo ripristinare.
+        self._visual_nominal: dict = {}
 
     # ------------------------------------------------------------ simulazione
 
@@ -90,6 +109,25 @@ class Simulator:
     def step(self) -> None:
         mujoco.mj_step(self.model, self.data)
         self._hold_removed_objects()
+        for instance_id, (position, quaternion) in self._held.items():
+            self._write_pose(instance_id, position, quaternion)
+
+    def hold_object(self, instance_id: str) -> None:
+        """Blocca un oggetto nella posa attuale finche' non viene rilasciato.
+
+        Serve quando una posa e' imposta dall'esterno e non deve essere
+        corretta dalla fisica, per esempio un target interrato in un terreno
+        che in simulazione e' rigido: gli altri oggetti possono cadergli
+        addosso e assestarsi, lui resta dov'e'.
+        """
+        state = self.get_object_state(instance_id)
+        self._held[instance_id] = (
+            np.asarray(state.position, dtype=float),
+            np.asarray(state.quaternion, dtype=float),
+        )
+
+    def release_object(self, instance_id: str) -> None:
+        self._held.pop(instance_id, None)
 
     def _hold_removed_objects(self) -> None:
         """Tiene fermi gli oggetti rimossi al punto di parcheggio.
@@ -382,16 +420,19 @@ class Simulator:
 
     def set_object_pose(self, instance_id: str, position, quaternion) -> None:
         """Teletrasporta un oggetto, azzerandone la velocita'."""
+        self._write_pose(instance_id, position, quaternion)
+        # qpos e le pose cartesiane dei geom sono cache separate in MuJoCo.
+        # Senza il forward, raycast e renderer continuano a vedere la posa
+        # precedente fino al passo fisico successivo.
+        mujoco.mj_forward(self.model, self.data)
+
+    def _write_pose(self, instance_id: str, position, quaternion) -> None:
         joint_id = self._joint_ids[instance_id]
         qpos_address = self.model.jnt_qposadr[joint_id]
         dof_address = self.model.jnt_dofadr[joint_id]
         self.data.qpos[qpos_address : qpos_address + 3] = position
         self.data.qpos[qpos_address + 3 : qpos_address + 7] = quaternion
         self.data.qvel[dof_address : dof_address + 6] = 0.0
-        # qpos e le pose cartesiane dei geom sono cache separate in MuJoCo.
-        # Senza il forward, raycast e renderer continuano a vedere la posa
-        # precedente fino al passo fisico successivo.
-        mujoco.mj_forward(self.model, self.data)
 
     def contact_pairs(self) -> list[tuple[str, str]]:
         """Coppie di corpi attualmente a contatto, senza duplicati.
@@ -622,7 +663,12 @@ class Simulator:
         camera_id = mujoco.mj_name2id(
             self.model, mujoco.mjtObj.mjOBJ_CAMERA, "cam_left"
         )
-        focal = rig.focal_length_px()
+        # Il fov si legge dal modello e non dalla descrizione: la domain
+        # randomization puo' cambiarlo, e una calibrazione ferma al valore
+        # nominale darebbe punti 3D sbagliati. Senza randomizzazione i due
+        # valori coincidono.
+        fovy = float(self.model.cam_fovy[camera_id])
+        focal = (rig.height / 2.0) / math.tan(math.radians(fovy) / 2.0)
         intrinsics = np.array(
             [[focal, 0.0, rig.width / 2.0],
              [0.0, focal, rig.height / 2.0],
@@ -637,6 +683,144 @@ class Simulator:
         )
         world_from_left[:3, 3] = self.data.cam_xpos[camera_id]
         return intrinsics, world_from_left, rig.baseline
+
+    # ------------------------------------------------------ aspetto visivo
+
+    def apply_visual_conditions(self, conditions: VisualConditions) -> None:
+        """Cambia camera, luci, terreno e colori senza toccare la fisica.
+
+        Serve alla domain randomization del visore: pose e contatti restano
+        quelli della scena, cambia solo come la si vede. Le maschere di
+        segmentazione e la calibrazione seguono la camera spostata. Un campo
+        `None` delle condizioni lascia quell'aspetto com'e'.
+        """
+        if not isinstance(conditions, VisualConditions):
+            raise TypeError("Servono VisualConditions")
+        if conditions.camera is not None:
+            self._apply_camera(conditions.camera)
+        if conditions.lighting is not None:
+            self._apply_lighting(conditions.lighting)
+        if conditions.ground is not None:
+            self._apply_ground(conditions.ground)
+        if conditions.background is not None:
+            self._apply_background(conditions.background)
+        for instance_id, rgb in conditions.object_rgb.items():
+            self._tint_object(instance_id, rgb)
+        mujoco.mj_kinematics(self.model, self.data)
+        mujoco.mj_camlight(self.model, self.data)
+
+    def _apply_camera(self, perturbation: CameraPerturbation) -> None:
+        rig = self.scene.stereo_camera
+        if rig is None:
+            raise RuntimeError("La scena non ha un rig stereo da spostare")
+        eye = np.asarray(rig.position, dtype=float) + perturbation.position_offset
+        target = np.asarray(rig.target, dtype=float) + perturbation.target_offset
+        right, up = _camera_axes(eye, target)
+        roll = math.radians(perturbation.roll_deg)
+        right, up = (
+            math.cos(roll) * right + math.sin(roll) * up,
+            -math.sin(roll) * right + math.cos(roll) * up,
+        )
+        # Colonne: assi x, y, z del frame camera MuJoCo (z = -avanti).
+        rotation = np.column_stack((right, up, np.cross(right, up)))
+        quaternion = np.zeros(4)
+        mujoco.mju_mat2Quat(quaternion, rotation.flatten())
+        fovy = rig.fovy if perturbation.fovy_deg is None else perturbation.fovy_deg
+        half = rig.baseline / 2.0
+        for name, side in STEREO_CAMERAS:
+            camera_id = self._named_id(mujoco.mjtObj.mjOBJ_CAMERA, name)
+            self.model.cam_pos[camera_id] = eye + right * side * half
+            self.model.cam_quat[camera_id] = quaternion
+            self.model.cam_fovy[camera_id] = fovy
+
+    def _apply_lighting(self, lighting: LightingConditions) -> None:
+        light_id = self._named_id(mujoco.mjtObj.mjOBJ_LIGHT, MAIN_LIGHT)
+        direction = np.asarray(lighting.direction, dtype=float)
+        self.model.light_dir[light_id] = direction / np.linalg.norm(direction)
+        self.model.light_diffuse[light_id] = (lighting.diffuse,) * 3
+        self.model.light_castshadow[light_id] = bool(lighting.cast_shadow)
+        self.model.vis.headlight.diffuse[:] = lighting.headlight
+        self.model.vis.headlight.ambient[:] = lighting.ambient
+
+    def _apply_ground(self, ground: GroundAppearance) -> None:
+        geom_id = self._named_id(mujoco.mjtObj.mjOBJ_GEOM, GROUND_GEOM)
+        material_id = self._named_id(mujoco.mjtObj.mjOBJ_MATERIAL, GROUND_MATERIAL)
+        nominal = self._visual_nominal.setdefault(
+            "ground",
+            {
+                "matid": int(self.model.geom_matid[geom_id]),
+                "rgba": self.model.geom_rgba[geom_id].copy(),
+                "reflectance": float(self.model.mat_reflectance[material_id]),
+            },
+        )
+        if ground.kind == "flat":
+            self.model.geom_matid[geom_id] = -1
+            rgba = nominal["rgba"].copy()
+            rgba[:3] = ground.base_gray
+            self.model.geom_rgba[geom_id] = rgba
+            self._initial_rgba[geom_id] = rgba
+            self._write_texture(GROUND_TEXTURE, None)
+        else:
+            self.model.geom_matid[geom_id] = nominal["matid"]
+            self.model.geom_rgba[geom_id] = nominal["rgba"]
+            self._initial_rgba[geom_id] = nominal["rgba"]
+            self._write_texture(
+                GROUND_TEXTURE,
+                None
+                if ground.kind == "checker"
+                else (ground.base_gray, ground.contrast, ground.grain_px, ground.seed),
+            )
+        self.model.mat_reflectance[material_id] = (
+            nominal["reflectance"] if ground.reflectance is None else ground.reflectance
+        )
+
+    def _apply_background(self, background: BackgroundAppearance) -> None:
+        # Grana ampia: lo sfondo deve variare, non diventare un altro pattern.
+        self._write_texture(
+            BACKGROUND_TEXTURE,
+            (background.base_gray, background.contrast, 256, background.seed),
+        )
+
+    def _write_texture(self, name: str, noise) -> None:
+        """Riscrive una texture: `None` ripristina l'originale, altrimenti rumore.
+
+        `noise` = (grigio medio, contrasto, grana in pixel, seed).
+        """
+        texture_id = self._named_id(mujoco.mjtObj.mjOBJ_TEXTURE, name)
+        start = int(self.model.tex_adr[texture_id])
+        height = int(self.model.tex_height[texture_id])
+        width = int(self.model.tex_width[texture_id])
+        channels = int(self.model.tex_nchannel[texture_id])
+        end = start + height * width * channels
+        original = self._visual_nominal.setdefault(
+            f"texture:{name}", self.model.tex_data[start:end].copy()
+        )
+        self.model.tex_data[start:end] = (
+            original if noise is None else _noise_texture(*noise, height, width, channels)
+        )
+        # Un renderer gia' creato ha la texture nella memoria della GPU: va
+        # ricaricata. Se non esiste ancora, la prendera' dal modello aggiornato.
+        if self._renderer is not None:
+            mujoco.mjr_uploadTexture(
+                self.model, self._renderer._mjr_context, texture_id
+            )
+
+    def _tint_object(self, instance_id: str, rgb) -> None:
+        if instance_id not in self._body_ids:
+            raise KeyError(f"Oggetto sconosciuto: {instance_id}")
+        body_id = self._body_ids[instance_id]
+        first_geom = self.model.body_geomadr[body_id]
+        geom_count = self.model.body_geomnum[body_id]
+        for geom_id in range(first_geom, first_geom + geom_count):
+            # Solo RGB: l'alpha resta quello che codifica "rimosso/presente".
+            self.model.geom_rgba[geom_id, :3] = rgb
+            self._initial_rgba[geom_id, :3] = rgb
+
+    def _named_id(self, kind, name: str) -> int:
+        identifier = mujoco.mj_name2id(self.model, kind, name)
+        if identifier < 0:
+            raise KeyError(f"Elemento MJCF assente: {name}")
+        return identifier
 
     def _get_renderer(self) -> mujoco.Renderer:
         if self._renderer is None:
@@ -664,3 +848,41 @@ def _rotation_angle(
     """
     cosine = abs(float(np.dot(first, second)))
     return 2.0 * math.acos(min(1.0, cosine))
+
+
+def _noise_texture(
+    base_gray: float,
+    contrast: float,
+    grain_px: int,
+    seed: int,
+    height: int,
+    width: int,
+    channels: int,
+) -> np.ndarray:
+    """Texture a macchie in scala di grigio, riproducibile dal seed.
+
+    Un rumore a bassa risoluzione ingrandito con interpolazione lineare da'
+    macchie morbide di circa `grain_px` pixel: abbastanza da togliere al
+    detector l'appiglio del pavimento a scacchi, senza pretendere di imitare
+    un terreno reale specifico.
+    """
+    rng = np.random.default_rng(seed)
+    coarse = rng.uniform(
+        -1.0,
+        1.0,
+        (max(2, math.ceil(height / grain_px) + 1), max(2, math.ceil(width / grain_px) + 1)),
+    )
+    rows = np.linspace(0.0, coarse.shape[0] - 1.0, height)
+    columns = np.linspace(0.0, coarse.shape[1] - 1.0, width)
+    # Interpolazione bilineare separabile, senza dipendere da OpenCV.
+    row_index = np.arange(coarse.shape[0])
+    column_index = np.arange(coarse.shape[1])
+    along_rows = np.stack(
+        [np.interp(rows, row_index, coarse[:, j]) for j in column_index], axis=1
+    )
+    field = np.stack(
+        [np.interp(columns, column_index, along_rows[i]) for i in range(height)], axis=0
+    )
+    gray = np.clip(base_gray + 0.5 * contrast * field, 0.0, 1.0)
+    values = np.rint(gray * 255.0).astype(np.uint8)
+    return np.repeat(values[:, :, None], channels, axis=2).ravel()

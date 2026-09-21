@@ -16,6 +16,7 @@ import physical_ai_mujoco.evaluation.observe_benchmark as benchmark
         (2, "dataset", 12),
         (3, "training", 13),
         (4, "benchmark", 14),
+        (5, "evaluation", 15),
     ],
 )
 def test_every_main_menu_branch(monkeypatch, choice, expected, return_code):
@@ -32,6 +33,9 @@ def test_every_main_menu_branch(monkeypatch, choice, expected, return_code):
     )
     monkeypatch.setattr(
         menu, "_train_interactive", lambda: calls.append(("training", None)) or 13
+    )
+    monkeypatch.setattr(
+        menu, "_evaluate_interactive", lambda: calls.append(("evaluation", None)) or 15
     )
 
     assert menu._interactive_menu() == return_code

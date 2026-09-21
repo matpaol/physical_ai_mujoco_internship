@@ -1,6 +1,6 @@
 # Stato esplicito della pipeline sensoriale
 
-Aggiornamento: 2026-09-20. Questo documento distingue codice completato,
+Aggiornamento: 2026-09-21 (visore); resto del documento al 2026-09-20. Questo documento distingue codice completato,
 implementazioni ancora da validare e lavoro non eseguito. Non sostituisce i
 report numerici del benchmark.
 
@@ -56,8 +56,12 @@ report numerici del benchmark.
   rumore.
 - Miglioramento del `GeometricRelationEstimator`: il grafo resta una baseline
   geometrica non calibrata.
-- Nuovo training del detector o di PPO: in accordo con il workflow, questi
-  esperimenti restano da eseguire sul PC dell'utente e da riportare nei report.
+- Nuovo training di PPO: in accordo con il workflow, resta da eseguire sul PC
+  dell'utente e da riportare nei report.
+- Training del detector: dal 2026-09-21 esiste il modulo `vision_training`
+  (ricette, domain randomization, scheda del modello, valutazione per % di
+  target visibile), verificato sul Mac con un training di prova. Il modello
+  addestrato sul dataset randomizzato `sim_dr_v1` non esiste ancora.
 
 ## Verifiche eseguite
 

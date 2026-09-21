@@ -3,6 +3,7 @@
   "scene_count": 3,
   "object_count": 3,
   "seed": 42,
+  "target_observable_min_visible_fraction": 0.05,
   "degraded": {"position_sigma": 0.0, "drop_probability": 0.0},
   "stereo": {"centroid_noise_px": 0.0, "drop_probability": 0.0},
   "rgbd": {"drop_probability": 0.0, "depth_sigma": 0.0, "translation_sigma": 0.0, "rotation_sigma_deg": 0.0},

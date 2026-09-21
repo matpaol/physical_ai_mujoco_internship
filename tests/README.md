@@ -3,7 +3,7 @@
 Avviare `/opt/miniconda3/envs/mujoco-tirocinio/bin/python main_test.py` dalla
 radice del progetto, oppure `python main_test.py --suite osserva`. Il menu
 raggruppa i test per responsabilità senza spostare i singoli file: `scena`,
-`osserva`, `validazione_sensori`, `pipeline_dati`, `decidi`, `architettura` e
+`osserva`, `validazione_sensori`, `pipeline_dati`, `visore`, `decidi`, `architettura` e
 `tutti`. Ogni nuovo `test_*.py` deve essere assegnato in `tests/suites.py`;
 altrimenti il menu lo segnala. `tutti` usa la normale discovery pytest.
 

@@ -1,0 +1,35 @@
+{
+  "kind": "dataset",
+  "name": "sim_nodr_v1",
+  "description": "Stesse scene di sim_dr_v1 (stesso seed) senza randomizzazione visiva: serve a misurare quanto guadagna la domain randomization.",
+  "seed": 0,
+  "scene_rules": "configs/observe_tests/immersed_scene_rules.json",
+  "scenes": {
+    "count": 800,
+    "object_count": [
+      1,
+      10
+    ],
+    "target_immersion": [
+      0.0,
+      0.95
+    ],
+    "views_per_scene": 2,
+    "target_absent_fraction": 0.1,
+    "hard_visibility": {
+      "range": [
+        0.03,
+        0.35
+      ],
+      "extra_views": 1
+    }
+  },
+  "splits": {
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "labels": {
+    "minimum_visible_pixels": 12
+  },
+  "randomization": null
+}

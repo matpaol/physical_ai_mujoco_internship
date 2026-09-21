@@ -34,7 +34,9 @@ from physical_ai_mujoco.sensors import (
 )
 from physical_ai_mujoco.sensors.lidar import LidarConfig, LidarNoise
 from physical_ai_mujoco.evaluation.target_exposure import (
+    TargetVisibility,
     measure_target_exposure,
+    measure_target_visibility,
     place_target_at_immersion,
 )
 
@@ -47,6 +49,10 @@ MODES = ("exact", "degraded", "stereo")
 ALL_MODES = MODES + ("rgbd", "fusion_oracle", "fusion_learned")
 DEFAULT_MODES = tuple(mode for mode in ALL_MODES if mode != "fusion_learned")
 STEREO_PROFILES = ("clean", "fixed", "random")
+# Sotto questa frazione di sagoma visibile il target non conta come
+# "osservabile". Vale solo se ne' la scheda del modello ne' il profilo
+# indicano un valore misurato o scelto.
+DEFAULT_OBSERVABLE_MIN_VISIBLE_FRACTION = 0.05
 INTERACTIVE_PROFILE_KEYS = frozenset(
     {"name", "scene_count", "object_count", "seed", "degraded", "stereo"}
 )
@@ -131,9 +137,42 @@ class _RecordingDetector:
         return self.last
 
 
+def observable_threshold(config: dict, detector_weights: str | Path | None) -> tuple[float, str]:
+    """Soglia di visibilita' per dire "target osservabile", e da dove viene.
+
+    Priorita': valore misurato nella scheda del modello (valutazione per fasce
+    di `vision_training`), poi il profilo del benchmark, poi il default.
+    """
+    if detector_weights is not None:
+        card = Path(detector_weights).with_suffix(".json")
+        if card.is_file():
+            measured = json.loads(card.read_text()).get("observability", {}).get(
+                "minimum_recognizable_visible_fraction"
+            )
+            if measured is not None:
+                return float(measured), f"scheda del modello {card.name}"
+    if config.get("target_observable_min_visible_fraction") is not None:
+        value = float(config["target_observable_min_visible_fraction"])
+        if not 0.0 <= value <= 1.0:
+            raise ValueError("target_observable_min_visible_fraction deve essere in [0, 1]")
+        return value, "profilo del benchmark"
+    return DEFAULT_OBSERVABLE_MIN_VISIBLE_FRACTION, "default del codice"
+
+
 def _target_visual_metrics(
-    detections, simulator, target_id: str, target_type_id: str
+    detections,
+    simulator,
+    target_id: str,
+    target_type_id: str,
+    visibility: TargetVisibility,
+    min_visible_fraction: float,
 ) -> dict:
+    """Riconoscimento visivo del target, giudicato solo se era osservabile.
+
+    Prima bastava un pixel del target in immagine per dirlo osservabile, e un
+    target sepolto con uno spiraglio contava come errore del detector. Ora
+    serve una frazione minima della sagoma visibile (`min_visible_fraction`).
+    """
     truth = simulator.render_instance_masks("cam_left").get(target_id)
     if truth is None:
         truth = np.zeros(
@@ -156,10 +195,14 @@ def _target_visual_metrics(
             float(np.logical_and(mask, truth).sum() / union) if union else 0.0
         )
     best_iou = max(overlaps, default=0.0)
-    observable = bool(truth.any())
+    observable = (
+        visibility.visible_fraction is not None
+        and visibility.visible_fraction >= min_visible_fraction
+    )
     recognized = observable and best_iou >= 0.25
     return {
         "target_observable": observable,
+        "target_observable_min_visible_fraction": min_visible_fraction,
         "target_visual_recognized": recognized,
         "target_visual_recall_observable": (
             float(recognized) if observable else None
@@ -526,6 +569,7 @@ def run_benchmark(
     detector_confidence_threshold: float = 0.25,
 ) -> dict:
     """Esegue osservatori diversi sulla medesima scena assestata per seed."""
+    min_visible_fraction, threshold_source = observable_threshold(config, detector_weights)
     import gymnasium as gym
     import physical_ai_mujoco.envs  # noqa: F401 (registra l'environment)
 
@@ -593,6 +637,9 @@ def run_benchmark(
                 exposure = measure_target_exposure(
                     simulator, target_id, immersion_fraction, placement
                 )
+            # Misurata una volta sulla scena, prima di ogni osservatore: e' una
+            # proprieta' della scena, non di chi la guarda.
+            visibility = measure_target_visibility(simulator, target_id)
             parameters = _sample_parameters(config, scene_seed)
             for mode in modes:
                 recording_detector = None
@@ -732,9 +779,20 @@ def run_benchmark(
                                 simulator,
                                 target_id,
                                 target_type_id,
+                                visibility,
+                                min_visible_fraction,
                             )
                         )
-                if exposure is not None:
+                metrics.update(
+                    target_visible_fraction_measured=visibility.visible_fraction,
+                    target_visible_pixels=visibility.visible_pixels,
+                    target_unoccluded_pixels=visibility.unoccluded_pixels,
+                )
+                if exposure is None:
+                    # Alimenta la curva per fasce anche fuori dagli
+                    # esperimenti di immersione, dove prima restava vuota.
+                    metrics["target_camera_visible_fraction"] = visibility.visible_fraction
+                else:
                     metrics.update(
                         target_immersion_fraction=exposure.immersion_fraction,
                         target_geometric_exposure=exposure.geometric_exposure_fraction,
@@ -771,6 +829,10 @@ def run_benchmark(
             "legacy modes use the simulator target instance id"
         ),
         "stereo_baseline_m": STEREO_BASELINE_M,
+        "target_observable_threshold": {
+            "min_visible_fraction": min_visible_fraction,
+            "source": threshold_source,
+        },
         "config": config,
         "modes": list(modes),
         "scenes": records,
@@ -1257,6 +1319,11 @@ def main(argv: list[str] | None = None) -> int:
     graph_files = export_graphs(report, destination.parent / destination.stem)
     destination.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
     print("\nRisultati OSSERVA (media sulle scene; '-' = non misurabile)")
+    threshold = report["target_observable_threshold"]
+    print(
+        f"Target osservabile se visibile almeno al {threshold['min_visible_fraction']:.0%} "
+        f"della sagoma ({threshold['source']})"
+    )
     for mode, summary in report["summary"].items():
         metrics = summary["metrics"]
         def show(key):

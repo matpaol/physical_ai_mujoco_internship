@@ -73,6 +73,15 @@ Gli esperimenti gestiscono training, raccolta dati, seed, configurazioni e
 artefatti. La valutazione confronta policy e baseline sulle stesse scene e
 produce metriche riproducibili.
 
+### VISION_TRAINING
+
+Produce il detector usato da OBSERVE: genera dataset da SIMULATION con
+randomizzazione visiva, addestra il segmenter e ne misura il riconoscimento
+del target per % di sagoma visibile. Non e codice deployable: consegna solo
+pesi e una scheda. Non importa MuJoCo; cambia l'aspetto della scena solo con
+`Simulator.apply_visual_conditions()`. Dettaglio in
+`physical_ai_mujoco/vision_training/README.md`.
+
 ## Contratti iniziali
 
 I contratti vengono stabilizzati, testati e versionati; non sono considerati

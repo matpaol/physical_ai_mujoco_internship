@@ -1,0 +1,15 @@
+{
+  "kind": "training",
+  "name": "smoke",
+  "description": "Due epoche sul dataset smoke: verifica che training, scheda e valutazione girino, non produce un modello utile.",
+  "dataset": "datasets/generated/smoke",
+  "base_model": "yolo11n-seg.pt",
+  "epochs": 2,
+  "image_size": 320,
+  "batch": 4,
+  "patience": 0,
+  "seed": 0,
+  "device": "auto",
+  "ultralytics": {"hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": 0.3, "workers": 0, "plots": false},
+  "evaluation": {"split": "test", "min_samples_per_band": 1}
+}

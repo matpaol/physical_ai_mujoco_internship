@@ -100,6 +100,28 @@ def test_sensor_implementations_do_not_import_mujoco():
             assert not any(name == "mujoco" or name.startswith("mujoco.") for name in names), path
 
 
+def test_vision_training_changes_appearance_only_through_simulator_api():
+    """Il visore non tocca MuJoCo: usa Simulator.apply_visual_conditions."""
+    for path in (ROOT / "physical_ai_mujoco" / "vision_training").rglob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                names = [alias.name for alias in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                names = [node.module or ""]
+            else:
+                continue
+            assert not any(name == "mujoco" or name.startswith("mujoco.") for name in names), path
+
+
+def test_visual_conditions_are_plain_data():
+    """Le condizioni visive si possono campionare senza caricare MuJoCo."""
+    path = ROOT / "physical_ai_mujoco" / "simulation" / "visual_conditions.py"
+    for node in ast.walk(ast.parse(path.read_text())):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            names = [alias.name for alias in node.names] if isinstance(node, ast.Import) else [node.module or ""]
+            assert not any(name.startswith("mujoco") for name in names)
+
+
 def test_shared_contracts_do_not_depend_on_sensor_implementations():
     for path in (ROOT / "physical_ai_mujoco" / "contracts").glob("*.py"):
         for node in ast.walk(ast.parse(path.read_text())):

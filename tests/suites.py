@@ -23,6 +23,9 @@ SUITES = {
         "test_learned_detector.py",
         "test_observe_menu.py",
     ),
+    "visore": (
+        "test_vision_training.py",
+    ),
     "decidi": (
         "test_phase_0b.py",
     ),

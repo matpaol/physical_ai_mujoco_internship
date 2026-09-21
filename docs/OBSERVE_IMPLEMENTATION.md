@@ -26,6 +26,12 @@ fit e valido; `ObservationEncoder` assegna slot stabili e produce il vettore
 fisso per PPO. Restano la sorgente reale/ROS 2 e la validazione su dati reali.
 
 Il banco di prova autonomo e descritto in [OBSERVE_TEST.md](OBSERVE_TEST.md).
+Il modello caricato da `LearnedDetector` si produce con il modulo
+`vision_training` (dataset randomizzato, training, valutazione): vedi
+[physical_ai_mujoco/vision_training/README.md](../physical_ai_mujoco/vision_training/README.md).
+La mappa fra i blocchi della specifica e queste classi, con gli scostamenti
+noti, sta in `software_architecture/observa.md` (sezione *Implementazione
+corrente*).
 
 ## Relazioni e incertezza
 

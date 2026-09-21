@@ -15,15 +15,21 @@ from physical_ai_mujoco.evaluation.observe_benchmark import (
     _resolve_detector_weights,
     main as benchmark_main,
 )
-from physical_ai_mujoco.experiments.synthetic_dataset import (
-    DatasetGenerationConfig,
-    generate_synthetic_dataset,
+from physical_ai_mujoco.vision_training import available_recipes, load_recipe
+from physical_ai_mujoco.vision_training.dataset import (
+    DATASETS_DIR,
+    generate_dataset,
     main as dataset_main,
 )
-from physical_ai_mujoco.experiments.train_detector import (
-    DetectorTrainingConfig,
-    train_detector,
+from physical_ai_mujoco.vision_training.evaluation import (
+    evaluate as evaluate_detector,
+    format_report,
+    main as evaluation_main,
+)
+from physical_ai_mujoco.vision_training.recipe import evaluation_settings_from_dict
+from physical_ai_mujoco.vision_training.training import (
     main as training_main,
+    train as train_detector,
 )
 
 
@@ -49,49 +55,75 @@ def _ask_int(
         print(f"Inserire un intero maggiore o uguale a {minimum}{suffix}.")
 
 
+def _choose(label: str, options: list[str]) -> int:
+    """Stampa un elenco numerato e restituisce l'indice scelto (da 0)."""
+    for index, text in enumerate(options, 1):
+        print(f"  {index}. {text}")
+    return _ask_int(label, 1, 1, len(options)) - 1
+
+
+def _choose_recipe(kind: str):
+    recipes = available_recipes(kind)
+    if not recipes:
+        print(f"Nessuna ricetta di tipo '{kind}' in configs/vision_training.")
+        return None
+    print(f"\nRicette di {'dataset' if kind == 'dataset' else 'training'} disponibili:")
+    index = _choose(
+        "Ricetta",
+        [f"{path.stem} — {data.get('description', '')}" for path, data in recipes],
+    )
+    return load_recipe(recipes[index][0])
+
+
 def _generate_interactive() -> int:
-    scenes = _ask_int("Quante scene generare", 100)
-    objects = _ask_int("Quanti oggetti per scena", 6)
-    seed = _ask_int("Seed", 0, 0)
-    stamp = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
-    destination = PROJECT_ROOT / "datasets/generated" / f"pfm_1_{stamp}"
-    summary = generate_synthetic_dataset(
-        DatasetGenerationConfig(scene_count=scenes, object_count=objects, seed=seed),
-        destination,
-    )
+    recipe = _choose_recipe("dataset")
+    if recipe is None:
+        return 1
+    destination = DATASETS_DIR / recipe.name
+    print(f"\nGenero {recipe.scene_count} scene in {destination} ...")
+    summary = generate_dataset(recipe, destination)
     print(f"\nDataset creato: {destination}")
-    print(
-        f"Immagini: {summary['image_count']} | "
-        f"target visibile: {summary['target_visible_images']} | "
-        f"target nascosto: {summary['target_hidden_images']}"
-    )
+    for split, stats in summary["splits"].items():
+        print(
+            f"  {split}: {stats['images']} immagini, target etichettato "
+            f"{stats['target_labelled']}, senza target {stats['target_absent']}"
+        )
     return 0
 
 
 def _train_interactive() -> int:
-    datasets = sorted(
-        (PROJECT_ROOT / "datasets/generated").glob("pfm_1*/data.yaml"),
-        key=lambda path: path.stat().st_mtime,
-        reverse=True,
-    )
-    if not datasets:
-        print("Nessun dataset disponibile. Usa prima 'Genera dataset sintetico'.")
+    recipe = _choose_recipe("training")
+    if recipe is None:
         return 1
-    print("\nDataset disponibili:")
-    for index, path in enumerate(datasets, 1):
-        print(f"  {index}. {path.parent.name}")
-    selected = datasets[_ask_int("Dataset", 1, 1, len(datasets)) - 1]
-    epochs = _ask_int("Epoche", 100)
-    stamp = datetime.now().astimezone().strftime("%Y%m%d_%H%M%S")
-    destination = PROJECT_ROOT / "outputs/detector_weights" / f"pfm_1_seg_{stamp}.pt"
     try:
-        result = train_detector(
-            DetectorTrainingConfig(selected, destination, epochs=epochs)
-        )
+        card = train_detector(recipe)
     except (RuntimeError, FileNotFoundError, FileExistsError, ValueError) as error:
         print(f"\nImpossibile avviare il training: {error}")
         return 1
-    print(f"Pesi salvati in: {result}")
+    print(f"Pesi: {card.with_suffix('.pt')}\nScheda: {card}")
+    return 0
+
+
+def _evaluate_interactive() -> int:
+    weights = sorted(DETECTOR_WEIGHTS_DIR.glob("*.pt"), key=lambda path: path.stat().st_mtime, reverse=True)
+    datasets = sorted(
+        (path.parent.parent for path in DATASETS_DIR.glob("*/annotations/val")),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    if not weights or not datasets:
+        print("Servono almeno un modello in outputs/detector_weights e un dataset generato.")
+        return 1
+    print("\nModelli:")
+    model = weights[_choose("Modello", [path.name for path in weights])]
+    print("\nDataset:")
+    dataset = datasets[_choose("Dataset", [path.name for path in datasets])]
+    splits = [split for split in ("test", "val", "train") if any((dataset / "annotations" / split).glob("*.json"))]
+    print("\nSplit (test = scene mai viste in addestramento):")
+    split = splits[_choose("Split", splits)]
+    report = evaluate_detector(model, dataset, evaluation_settings_from_dict({"split": split}))
+    print()
+    print(format_report(report))
     return 0
 
 
@@ -113,11 +145,12 @@ def _interactive_menu() -> int:
     else:
         print("Modello attivo: nessuno; fusion_learned non e' disponibile\n")
     print("  1. Test visivo e confronto sorgenti OSSERVA")
-    print("  2. Genera dataset sintetico della PFM-1")
-    print("  3. Addestra il detector")
+    print("  2. Genera un dataset del visore (da ricetta)")
+    print("  3. Addestra il detector (da ricetta)")
     print("  4. Benchmark e confronti")
+    print("  5. Valuta il detector per % di target visibile")
     print("  0. Esci\n")
-    choice = _ask_int("Scelta", 1, 0, 4)
+    choice = _ask_int("Scelta", 1, 0, 5)
     if choice == 0:
         return 0
     if choice == 1:
@@ -130,6 +163,8 @@ def _interactive_menu() -> int:
         return _train_interactive()
     if choice == 4:
         return benchmark_main([])
+    if choice == 5:
+        return _evaluate_interactive()
     print("Scelta non valida.")
     return 1
 
@@ -140,6 +175,8 @@ def main(argv: list[str] | None = None) -> int:
         return dataset_main(arguments[1:])
     if arguments and arguments[0] == "train-detector":
         return training_main(arguments[1:])
+    if arguments and arguments[0] == "evaluate-detector":
+        return evaluation_main(arguments[1:])
     if arguments and arguments[0] == "benchmark":
         return benchmark_main(arguments[1:])
     if arguments:

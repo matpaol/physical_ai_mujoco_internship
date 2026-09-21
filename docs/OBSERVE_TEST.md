@@ -53,8 +53,23 @@ I modelli esportati sono in `outputs/detector_weights/`. Il menu mostra la
 cartella e il modello attivo all'avvio. La selezione segue questo ordine:
 percorso passato con `--weights`, `pfm_1_seg.pt`, modello versionato
 `pfm_1_seg*.pt` modificato piu di recente. Il modello attuale e
-`pfm_1_seg_immersed_v2.pt`. Il training interattivo stampa sempre il percorso
-assoluto del file prodotto.
+`pfm_1_seg_immersed_v2.pt`. I modelli prodotti da `vision_training` hanno il
+nome della loro ricetta (es. `sim_dr_v1_m3.pt`) e non vengono scelti da soli:
+vanno indicati con `--weights`.
+
+Dal 21/09/2026 dataset, training e valutazione del detector stanno nel modulo
+`physical_ai_mujoco/vision_training/` (vedi il suo `README.md`): le voci 2 e 3
+del menu scelgono una ricetta in `configs/vision_training/`, la voce 5 valuta
+un modello per fasce di % di target visibile.
+
+**Target osservabile.** Il report non considera piu "osservabile" un target
+di cui si vede almeno un pixel, ma uno di cui si vede almeno una frazione
+della sagoma (pixel visibili / pixel del target da solo e non interrato). La
+soglia viene dalla scheda del modello se la valutazione l'ha misurata,
+altrimenti dal profilo (`target_observable_min_visible_fraction`, 0.05),
+altrimenti dal default del codice; il report e il terminale dicono quale. La
+curva del riconoscimento per fasce di visibilita e ora popolata in ogni
+benchmark, non solo negli esperimenti di immersione.
 
 Gli errori operativi vengono mostrati senza traceback. Un errore interno
 imprevisto produce un messaggio breve e salva il traceback completo in
