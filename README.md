@@ -1,172 +1,296 @@
 # Physical AI con MuJoCo
 
-Banco di prova sim2real per scegliere l'ordine di rimozione di oggetti da un
-mucchio, raggiungere un target e misurare il disturbo provocato agli altri.
-Il progetto cresce per de-idealizzazione: prima decisioni con stato esatto e
-rimozione ideale, poi percezione stereo, robustezza, UR5 simulato e sistema reale.
+Repository del progetto di tirocinio dedicato a **MuJoCo**, simulazione fisica, reinforcement learning e studio dei DLO (*Deformable Linear Objects*).
 
-## Avvio
+Questo README contiene soprattutto un promemoria pratico per sincronizzare il progetto tra:
 
-Dalla cartella del progetto, nell'ambiente Conda gia usato:
+- Mac con Visual Studio Code;
+- GitHub;
+- PC Linux del tirocinio;
+- eventualmente Google Colab.
+
+## Regola fondamentale
+
+Prima di iniziare a lavorare:
 
 ```bash
+git pull
+```
+
+Dopo aver modificato i file:
+
+```bash
+git add .
+git commit -m "Descrizione breve delle modifiche"
+git push
+```
+
+Il flusso è quindi:
+
+```text
+git pull → modifica i file → git add → git commit → git push
+```
+
+## Struttura prevista
+
+```text
+physical-ai-mujoco/
+├── README.md
+├── environment.yml
+├── requirements.txt
+├── test_1_mujoco_base/
+├── test_2_pallina_bicchieri/
+├── test_3_dyndlo/
+├── notebooks/
+└── docs/
+```
+
+L'ambiente Conda, Miniforge, cache, password, token e file molto pesanti non devono essere caricati nel repository.
+
+## 1. Prima configurazione sul Mac
+
+Questi passaggi si eseguono una volta sola.
+
+### Verificare Git
+
+Aprire il terminale del Mac e digitare:
+
+```bash
+git --version
+```
+
+### Configurare nome ed email
+
+```bash
+git config --global user.name "Matteo"
+git config --global user.email "LA-TUA-EMAIL-GITHUB"
+```
+
+### Scaricare il repository
+
+Sostituire `TUO-USERNAME` con il proprio username GitHub:
+
+```bash
+cd ~/Documents
+git clone https://github.com/TUO-USERNAME/physical-ai-mujoco.git
+cd physical-ai-mujoco
+```
+
+### Aprire il progetto in VS Code
+
+```bash
+code .
+```
+
+Se il comando `code` non è disponibile, aprire VS Code e selezionare **File → Open Folder**, quindi scegliere la cartella `physical-ai-mujoco`.
+
+## 2. Prima configurazione sul PC Linux
+
+Questi passaggi si eseguono una volta sola.
+
+### Verificare Git
+
+```bash
+git --version
+```
+
+### Configurare nome ed email
+
+```bash
+git config --global user.name "Matteo"
+git config --global user.email "LA-TUA-EMAIL-GITHUB"
+```
+
+### Scaricare il repository
+
+```bash
+cd /home/matteo
+git clone https://github.com/TUO-USERNAME/physical-ai-mujoco.git
+cd physical-ai-mujoco
+```
+
+Se esiste già una vecchia cartella locale con gli esperimenti, non copiarla alla cieca sopra il repository: spostare soltanto i singoli file necessari dopo aver eseguito il clone.
+
+## 3. Routine quotidiana in VS Code
+
+Nel terminale integrato di VS Code, verificare innanzitutto di trovarsi nella cartella del progetto:
+
+```bash
+pwd
+git status
+```
+
+### Prima di modificare i file
+
+```bash
+git pull
+```
+
+### Dopo le modifiche
+
+Controllare cosa è cambiato:
+
+```bash
+git status
+git diff
+```
+
+Preparare i file per il commit:
+
+```bash
+git add .
+```
+
+Creare il commit:
+
+```bash
+git commit -m "Aggiunge test di caduta della pallina"
+```
+
+Caricare il commit su GitHub:
+
+```bash
+git push
+```
+
+### Controllare la cronologia
+
+```bash
+git log --oneline --max-count=10
+```
+
+## 4. Passare dal Mac al PC Linux
+
+Sul Mac, dopo aver terminato le modifiche:
+
+```bash
+git add .
+git commit -m "Aggiorna esperimento MuJoCo"
+git push
+```
+
+Sul PC Linux, prima di eseguire il codice:
+
+```bash
+cd /home/matteo/physical-ai-mujoco
+git pull
 conda activate mujoco-tirocinio
-python main.py
 ```
 
-Il banco di prova autonomo di OSSERVA si avvia con
-`python -m physical_ai_mujoco.observe.main_test_osserva`. Chiede quale
-configurazione e quale sorgente confrontare. Dopo il report permette di
-riaprire ogni scena nel viewer MuJoCo/Gymnasium con le viste stereo affiancate.
-Il menu consente di scegliere il disturbo delle rilevazioni stereo e un numero
-fisso o casuale di oggetti per scena; il report registra i valori effettivi.
-Il test visivo separato della stereocamera si avvia con
-`python -m physical_ai_mujoco.sensors.test_stereo_camera`: apre il viewer e
-mostra le due immagini monocromatiche affiancate. La distanza tra le camere
-si imposta in `physical_ai_mujoco/sensors/capture.py` tramite
-`STEREO_BASELINE_M`. I profili di disturbo sono in `configs/observe_tests/`
-e i report vanno in `outputs/observe_tests/`.
-Il banco include ora anche la sorgente `rgbd`, che usa depth renderizzata
-da MuJoCo e riporta errore di dimensioni e F1 dei supporti. Il test congiunto
-di stereo, depth e LiDAR e' `python -m physical_ai_mujoco.sensors.test_sensor_suite`;
-il LiDAR ha anche `python -m physical_ai_mujoco.sensors.lidar.test_lidar`.
-La modalita `fusion_learned` usa il detector della PFM-1 sulla camera B/N e il
-LiDAR per posizione e geometria. Il menu mostra sempre il modello attivo; i
-pesi sono salvati in `outputs/detector_weights/`. Il modello fornito con il
-progetto e `pfm_1_seg_immersed_v2.pt`.
-La storia, le responsabilita' e i limiti del modulo sono nel suo
-[README](physical_ai_mujoco/sensors/README.md); i contratti e le prove di
-calibrazione sono descritti anche in [docs/SENSORS.md](docs/SENSORS.md).
-
-Il menu rende eseguibili 0A, 0B, 1A, 1B e 1C. In 1B PPO riceve il vettore
-prodotto da camera B/N, detector e LiDAR; in 1C la stessa catena riceve
-disturbi randomizzati a runtime. I modelli sensoriali usano il prefisso
-`ppo_sensor_` per non essere confusi con quelli teacher di 1A.
-
-I profili vivono in `configs/experiments/`: selezionano i componenti nel builder.
-Anche i processi avviati dal menu ereditano la selezione. Le librerie scientifiche
-non leggono nomi o numeri delle fasi. La fase 3 e assorbita da 1B e 2.
-`main.py` si puo ancora avviare dal pulsante Run di VS Code.
-
-Per una nuova installazione (Python >= 3.10):
+Esempio di esecuzione:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ".[test,train,video,detector]"
-python main.py
+python test_1_mujoco_base/test_caduta.py
 ```
 
-Anche `python -m pip install -r requirements.txt` usa le stesse dipendenze.
-`train` installa Stable-Baselines3; `video` aggiunge il supporto MP4;
-`detector` installa Ultralytics per `fusion_learned` e per il training della
-segmentazione.
-L'installazione supportata e editable dalla copia del repository: configurazioni
-e dataset rimangono nella radice, fuori dal pacchetto Python.
+## 5. Passare dal PC Linux al Mac
 
-## Comandi disponibili
+Sul PC Linux, dopo aver modificato o creato file:
 
 ```bash
-python -m scripts.run_phase_0a --seed 42
-python -m scripts.run_phase_0b --objects 6 --headless --episodes 3
-python -m scripts.inspect_episode --objects 6 --policy top --seed 0 --episodes 20 --quiet
+git status
+git add .
+git commit -m "Aggiorna test eseguito su Linux"
+git push
 ```
 
-Per allenare usare il menu oppure:
+Sul Mac:
 
 ```bash
-python scripts/allena.py --oggetti 6 --passi 25000 --paralleli 2
-python scripts/quanto_margine.py --oggetti 3 --scene 2 --finisci-al-target
-python scripts/verifica_fisica.py
-python -m scripts.record_phase_0b --objects 3 --format gif
+cd ~/Documents/physical-ai-mujoco
+git pull
 ```
 
-I precedenti comandi `scripts/*` sono mantenuti come punti di ingresso; il codice
-operativo risiede nel package. I modelli esistenti in `outputs/modelli/` e i loro
-file `_normalizzazione.pkl` restano utilizzabili con lo stesso numero di oggetti.
-Un numero diverso viene ora segnalato con un errore esplicito.
+Ora VS Code mostrerà i file aggiornati.
 
-## Organizzazione
+## 6. Comandi Git più utili
 
-| Package | Responsabilita |
+| Comando | Significato |
 |---|---|
-| `contracts` | Observation, PrivilegedState, decisione ed esiti |
-| `scene` | Dataset, descrizione e campionamento della scena |
-| `simulation` | MuJoCo, sessione della scena, assestamento, pool, viewer |
-| `sensors` | Stereo B/N, LiDAR, detector, tracking, disturbi e calibrazione |
-| `observe` | Fusione, CAD PFM-1, scena/relazioni/incertezza e encoding PPO |
-| `decide` | Classi decisionali casuale, altezza, target e PPO |
-| `execute` | Rimozione ideale tramite API del simulatore |
-| `task` | Disturbo, reward, crollo, successo e fine episodio |
-| `envs` | Adapter Gymnasium; percorso storico mantenuto |
-| `infrastructure` | Builder e adapter dei callback esistenti |
-| `experiments` | Rollout, training, registrazione, monitor e metadati |
-| `evaluation` | Ispezione, test OSSERVA, ricerca esaustiva e verifiche fisiche |
-| `ui` | Menu e interazione con l'utente |
+| `git status` | Mostra i file modificati e lo stato del repository |
+| `git pull` | Scarica e integra gli ultimi aggiornamenti da GitHub |
+| `git diff` | Mostra le modifiche non ancora preparate |
+| `git add nome_file.py` | Prepara un solo file per il commit |
+| `git add .` | Prepara tutte le modifiche nella cartella corrente |
+| `git commit -m "messaggio"` | Registra localmente una versione delle modifiche |
+| `git push` | Carica su GitHub i commit locali |
+| `git log --oneline` | Mostra la cronologia sintetica dei commit |
+| `git branch --show-current` | Mostra il branch attuale |
 
-Ogni ruolo pubblica la sua API tramite `__init__.py`. DECIDE riceve dati, produce
-un `ObjectDecision` e non legge il simulatore. Il runner passa la decisione
-all'ambiente, che coordina gli altri componenti.
+## 7. Se `git push` viene rifiutato
 
-## Stato attuale e limiti
+Può accadere quando GitHub contiene modifiche che il computer locale non ha ancora scaricato.
 
-- Fasi 0A, 0B e 1A operative; 1B/1C sono collegate end-to-end ma richiedono
-  ancora training e validazione statistica delle policy sensoriali.
-- `state` conserva i 17 valori originali per oggetto; `stereo` restituisce due
-  immagini RGB; `both` restituisce stato e immagini sincronizzati.
-- La stereo simulata produce immagini B/N e maschere visibili dal renderer
-  MuJoCo. `fusion_oracle` usa le etichette ideali per la baseline;
-  `fusion_learned` usa un detector YOLO-seg addestrato sulla PFM-1 e sugli
-  ostacoli sintetici. Manca ancora la validazione su dati reali.
-- OSSERVA espone ora una `Observation` strutturata con scena, candidati di
-  relazione e incertezza. Il vettore esatto a 17 valori per oggetto resta il
-  canale privilegiato per il PPO teacher; `SensorObserver` combina maschere
-  camera e punti LiDAR. `ObjectTracker` stabilizza gli ID, `CADMatcher` usa la
-  STL PFM-1 per completare la geometria parziale e `ObservationEncoder`
-  costruisce il vettore fisso consumato da PPO in 1B/1C.
-- Massa e attrito restano nel ramo privilegiato del teacher; `Observation` non
-  li espone. La stereo a centroidi stima le posizioni ma non ancora dimensioni
-  e relazioni di supporto affidabili; il banco di prova rende visibile il limite.
-- La rimozione resta ideale: il robot non e ancora presente.
-- `SensorBundle`/`StereoObserver` restano soltanto come baseline deprecata per
-  i confronti stereo-only e RGB-D; il percorso deployable usa
-  `SynchronizedSensorPacket`.
-- Con la configurazione attuale l'episodio termina al target, prosegue dopo un
-  crollo e ha limite di 64 azioni. `is_success` richiede target rimosso senza
-  crolli precedenti. Il disturbo considera la traslazione finale massima degli
-  oggetti rimasti, escludendo il target; non misura il percorso o la rotazione.
-- La validazione scientifica di 1A deve ancora definire split e gate. I seed
-  della valutazione del trainer sono registrati, ma non dimostrano un test set
-  indipendente dal training.
-
-## Test e riproducibilita
+Eseguire:
 
 ```bash
-python -m pytest -q
-python scripts/verifica_fisica.py
-python -m scripts.verifica_osserva
+git pull --rebase
+git push
 ```
 
-`verifica_osserva` esegue tutte le sorgenti sui profili `clean`, `fixed` e
-`random`, continua dopo un errore isolato e salva il riepilogo in
-`outputs/observe_tests/verifica_completa_*.json`.
+Se Git segnala un conflitto, non forzare il caricamento. Aprire i file indicati da VS Code, scegliere quali modifiche mantenere, quindi eseguire:
 
-I test grafici richiedono accesso al display macOS. Su Linux senza display il
-backend offscreen va configurato in base alla macchina (EGL oppure OSMesa).
-Un errore CoreGraphics di accesso al display non certifica un errore della stereo.
+```bash
+git add .
+git rebase --continue
+git push
+```
 
-Ogni nuovo training salva anche `<modello>_run.json`: parametri, seed di
-valutazione, versioni, commit, hash del codice, configurazioni, dataset e risultati.
-La migrazione e documentata in [docs/RESTRUCTURING.md](docs/RESTRUCTURING.md).
+Se non si è sicuri di come risolvere il conflitto, fermarsi e controllare `git status` prima di procedere.
 
-## Documenti guida
+## 8. Annullare modifiche non ancora salvate in un commit
 
-- [Architettura](docs/ARCHITECTURE.md)
-- [De-idealizzazione](docs/DEIDEALIZATION.md)
-- [Implementazione OSSERVA](docs/OBSERVE_IMPLEMENTATION.md)
-- [Stato completo/parziale/non implementato dei sensori](docs/SENSOR_COMPLETION_STATUS.md)
-- [Banco di prova OSSERVA](docs/OBSERVE_TEST.md)
-- [Registro delle modifiche](MODIFICHE.md)
-- [Documentazione precedente, storica](docs/history/)
+Per vedere prima quali modifiche andrebbero perse:
 
-Gli output e le vecchie copie in `_to_delete/` rimangono locali, esclusi da Git.
+```bash
+git diff
+```
+
+Per annullare le modifiche locali di un singolo file:
+
+```bash
+git restore percorso/del/file.py
+```
+
+Questo comando elimina le modifiche non registrate di quel file, quindi va usato con attenzione.
+
+## 9. Usare il repository in Google Colab
+
+Per un repository pubblico:
+
+```python
+!git clone https://github.com/TUO-USERNAME/physical-ai-mujoco.git
+%cd physical-ai-mujoco
+!pip install -q mujoco
+```
+
+Il runtime Colab è temporaneo. Prima di chiuderlo, scaricare i file importanti oppure eseguire commit e push solo dopo aver configurato un metodo di autenticazione sicuro. Non scrivere token GitHub direttamente nei notebook destinati al repository.
+
+## 10. Buone abitudini
+
+- Eseguire sempre `git pull` prima di iniziare.
+- Fare commit piccoli, con un messaggio chiaro.
+- Eseguire `git status` prima di `git add .`.
+- Non lavorare contemporaneamente sullo stesso file da Mac e Linux senza sincronizzare.
+- Non caricare password, token, credenziali o materiale riservato dell'ente.
+- Non caricare l'ambiente Conda: usare `environment.yml` o `requirements.txt` per descrivere le dipendenze.
+- Caricare codice e configurazioni; evitare video, dataset, cache e risultati molto pesanti.
+
+## Promemoria velocissimo
+
+All'inizio:
+
+```bash
+cd percorso/physical-ai-mujoco
+git pull
+```
+
+Alla fine:
+
+```bash
+git status
+git add .
+git commit -m "Descrive cosa è cambiato"
+git push
+```
+
