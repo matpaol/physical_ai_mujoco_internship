@@ -58,6 +58,33 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-22 08:45:20 — Documentato come cambiare scenario e oggetti nel README del visore
+
+**Chi:** Claude (claude-sonnet-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Solo documentazione, nessun cambiamento di comportamento. Nuova
+sezione "Cambiare lo scenario (oggetti, target)" in
+`physical_ai_mujoco/vision_training/README.md`: differenza fra riusare tipi
+gia' nel catalogo (`datasets/object_dataset/geometric_objects.json`) e
+aggiungerne uno nuovo, come `required_type_ids`/`target_type_id` nella ricetta
+di scena scelgono e ciclano i tipi, cosa ricontrollare se cambia il target
+(`target_palette`, `minimum_visible_pixels`, `hard_visibility`), e il limite
+noto (un solo target, una sola classe di ostacoli).
+
+**Perche':** Matteo ha chiesto come adattare il sistema cambiando gli oggetti
+della scena; la domanda ha mostrato che ne' il README del visore ne'
+`docs/ADDESTRAMENTO_VISORE.md` spiegavano questo passaggio, nonostante sia
+proprio il tipo di domanda a cui questi file devono rispondere fra un mese.
+
+**File:** `physical_ai_mujoco/vision_training/README.md`.
+
+**Verifica:** contenuto controllato sul codice —
+`scene/dataset_loader.py` (formato e validazione del catalogo),
+`simulation/session.py` (`_rules_with_object_count`: come `required_type_ids`
+viene ciclato secondo l'object_count), `configs/observe_tests/
+immersed_scene_rules.json` (struttura reale di una ricetta di scena). Nessun
+test da rilanciare: non cambia codice.
+
 ## 2026-09-21 21:06:17 — Guida ai comandi per l'addestramento del visore
 
 **Chi:** Claude (claude-opus-5, Anthropic), su richiesta di Matteo Paolini.

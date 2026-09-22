@@ -144,6 +144,47 @@ Attenzione: con l'ottimizzatore automatico di Ultralytics il `lr0` della
 ricetta viene ignorato. Se il learning rate conta, scrivere anche
 `"optimizer": "AdamW"` (o `"SGD"`) nella sezione `ultralytics`.
 
+## Cambiare lo scenario (oggetti, target)
+
+Non e' una cosa che si tocca in questo pacchetto: si tocca la ricetta di
+scena (`scene_rules`, es. `configs/observe_tests/immersed_scene_rules.json`)
+e, se serve, il catalogo oggetti. `vision_training` non sa nulla dei tipi
+specifici: etichetta sempre e solo due classi, `obstacle` e il
+`target_type_id` dichiarato — qualunque tipo non sia il target diventa
+"obstacle". Per questo cambiare lo scenario non richiede toccare `dataset.py`
+ne' `labels.py`.
+
+**Caso 1 — usare tipi gia' nel catalogo, cambiare solo quali/quanti.**
+Il catalogo e' `datasets/object_dataset/geometric_objects.json` (forma,
+dimensioni, massa, attrito, colore di ogni tipo). Nella ricetta di scena si
+tocca solo `object_selection`:
+
+- `required_type_ids`: i tipi che possono comparire. Non e' un limite al
+  numero di oggetti — a runtime vengono ciclati per riempire quanti oggetti
+  servono (`--objects` o `scenes.object_count` della ricetta dataset); vedi
+  `Session._rules_with_object_count` in `simulation/session.py`.
+- `target_type_id`: quale di questi e' il target.
+
+**Caso 2 — un tipo che non esiste ancora nel catalogo.** Si aggiunge una voce
+in `geometric_objects.json` (forma, `size_range`, `friction`, `rgba`; per una
+mesh anche `mesh_file` STL e `mesh_scale`) e poi la si richiama da
+`required_type_ids` come nel caso 1. E' una modifica del modulo scena/
+simulazione (`scene/dataset_loader.py` valida il file), non del visore.
+
+**Se cambia il target**, oltre a `target_type_id` vanno ricontrollate due
+cose nella ricetta dataset, altrimenti si randomizzano colori o soglie
+pensati per il target vecchio:
+
+- `randomization.objects.target_palette`: oggi sono i colori realistici della
+  PFM-1. Va rifatta per il colore vero del nuovo target.
+- `labels.minimum_visible_pixels` e `scenes.hard_visibility.range`: dipendono
+  da quanto e' piccolo il target e da come si "nasconde" quando interrato.
+
+Limite noto: il sistema assume sempre un solo target e un'unica classe
+generica di ostacoli. Piu' tipi di target, o classi di ostacolo distinte da
+riconoscere separatamente, sono un cambiamento piu' grande e non sono
+supportati oggi.
+
 ## Cosa si trova su disco
 
 ```text

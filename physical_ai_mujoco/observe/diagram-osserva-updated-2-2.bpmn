@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_ObservePipeline" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="18.29.0">
+  <bpmn:collaboration id="Collaboration_Observe">
+    <bpmn:participant id="Participant_Input" name="INPUT SOURCES" processRef="Process_Input" />
+    <bpmn:participant id="Participant_Observe" name="OSSERVA" processRef="Process_Observe" />
+    <bpmn:participant id="Participant_Decide" name="DECIDE" processRef="Process_Decide" />
+    <bpmn:messageFlow id="MessageFlow_ObservationDecide" sourceRef="Event_Observation" targetRef="Event_DecideInput" />
+    <bpmn:messageFlow id="Flow_021k4kr" sourceRef="Activity_0do6e8x" targetRef="Task_SceneUnderstanding" />
+    <bpmn:textAnnotation id="Annotation_Li">
+      <bpmn:text>Li et al. — support / dependency representation</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="Annotation_Marques">
+      <bpmn:text>Marques-inspired — observability / uncertainty</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_Li" sourceRef="Task_PhysicalRelations" targetRef="Annotation_Li" />
+    <bpmn:association id="Association_Marques" sourceRef="Task_Uncertainty" targetRef="Annotation_Marques" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Input" isExecutable="false">
+    <bpmn:task id="Task_Mujoco" name="MuJoCo state\n(full or degraded)">
+      <bpmn:outgoing>Flow_MujocoGateway</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_SimStereo" name="Simulated stereo camera + lidar">
+      <bpmn:outgoing>Flow_SimStereoGateway</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_RealStereo" name="Real stereo camera + lidar">
+      <bpmn:outgoing>Flow_RealStereoGateway</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_InputSource">
+      <bpmn:incoming>Flow_MujocoGateway</bpmn:incoming>
+      <bpmn:incoming>Flow_SimStereoGateway</bpmn:incoming>
+      <bpmn:incoming>Flow_RealStereoGateway</bpmn:incoming>
+      <bpmn:outgoing>Flow_0crrx3d</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:subProcess id="Activity_0do6e8x" name="Perception / State Extraction">
+      <bpmn:incoming>Flow_0crrx3d</bpmn:incoming>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_MujocoGateway" sourceRef="Task_Mujoco" targetRef="Gateway_InputSource" />
+    <bpmn:sequenceFlow id="Flow_SimStereoGateway" sourceRef="Task_SimStereo" targetRef="Gateway_InputSource" />
+    <bpmn:sequenceFlow id="Flow_RealStereoGateway" sourceRef="Task_RealStereo" targetRef="Gateway_InputSource" />
+    <bpmn:sequenceFlow id="Flow_0crrx3d" sourceRef="Gateway_InputSource" targetRef="Activity_0do6e8x" />
+  </bpmn:process>
+  <bpmn:process id="Process_Observe" isExecutable="false">
+    <bpmn:startEvent id="Start_Observe" />
+    <bpmn:task id="Task_SceneUnderstanding" name="Scene Understanding">
+      <bpmn:outgoing>Flow_SceneRelations</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PhysicalRelations" name="Physical Relationships / Dependency Representation">
+      <bpmn:incoming>Flow_SceneRelations</bpmn:incoming>
+      <bpmn:outgoing>Flow_RelationsUncertainty</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Uncertainty" name="Observability / Uncertainty Representation">
+      <bpmn:incoming>Flow_RelationsUncertainty</bpmn:incoming>
+      <bpmn:outgoing>Flow_UncertaintyBuilder</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_ObservationBuilder" name="Observation Builder">
+      <bpmn:incoming>Flow_UncertaintyBuilder</bpmn:incoming>
+      <bpmn:outgoing>Flow_BuilderObservation</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:intermediateThrowEvent id="Event_Observation" name="Observation">
+      <bpmn:incoming>Flow_BuilderObservation</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageDef_Observation" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="Flow_SceneRelations" sourceRef="Task_SceneUnderstanding" targetRef="Task_PhysicalRelations" />
+    <bpmn:sequenceFlow id="Flow_RelationsUncertainty" sourceRef="Task_PhysicalRelations" targetRef="Task_Uncertainty" />
+    <bpmn:sequenceFlow id="Flow_UncertaintyBuilder" sourceRef="Task_Uncertainty" targetRef="Task_ObservationBuilder" />
+    <bpmn:sequenceFlow id="Flow_BuilderObservation" sourceRef="Task_ObservationBuilder" targetRef="Event_Observation" />
+  </bpmn:process>
+  <bpmn:process id="Process_Decide" isExecutable="false">
+    <bpmn:startEvent id="Event_DecideInput" name="Receive Observation">
+      <bpmn:messageEventDefinition id="MessageDef_DecideInput" />
+    </bpmn:startEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_Observe">
+    <bpmndi:BPMNPlane id="Plane_Observe" bpmnElement="Collaboration_Observe">
+      <bpmndi:BPMNShape id="Participant_Input_di" bpmnElement="Participant_Input" isHorizontal="true">
+        <dc:Bounds x="120" y="600" width="980" height="370" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Mujoco_di" bpmnElement="Task_Mujoco">
+        <dc:Bounds x="190" y="850" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SimStereo_di" bpmnElement="Task_SimStereo">
+        <dc:Bounds x="410" y="850" width="150" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RealStereo_di" bpmnElement="Task_RealStereo">
+        <dc:Bounds x="630" y="850" width="150" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_InputSource_di" bpmnElement="Gateway_InputSource" isMarkerVisible="true">
+        <dc:Bounds x="460" y="760" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0do6e8x_di" bpmnElement="Activity_0do6e8x">
+        <dc:Bounds x="435" y="660" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_MujocoGateway_di" bpmnElement="Flow_MujocoGateway">
+        <di:waypoint x="265" y="850" />
+        <di:waypoint x="265" y="785" />
+        <di:waypoint x="460" y="785" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SimStereoGateway_di" bpmnElement="Flow_SimStereoGateway">
+        <di:waypoint x="485" y="850" />
+        <di:waypoint x="485" y="810" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RealStereoGateway_di" bpmnElement="Flow_RealStereoGateway">
+        <di:waypoint x="705" y="850" />
+        <di:waypoint x="705" y="785" />
+        <di:waypoint x="510" y="785" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0crrx3d_di" bpmnElement="Flow_0crrx3d">
+        <di:waypoint x="485" y="760" />
+        <di:waypoint x="485" y="740" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Observe_di" bpmnElement="Participant_Observe" isHorizontal="true">
+        <dc:Bounds x="120" y="260" width="1260" height="340" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Observe_di" bpmnElement="Start_Observe">
+        <dc:Bounds x="180" y="412" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SceneUnderstanding_di" bpmnElement="Task_SceneUnderstanding">
+        <dc:Bounds x="290" y="390" width="150" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PhysicalRelations_di" bpmnElement="Task_PhysicalRelations">
+        <dc:Bounds x="510" y="390" width="190" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Uncertainty_di" bpmnElement="Task_Uncertainty">
+        <dc:Bounds x="770" y="390" width="190" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ObservationBuilder_di" bpmnElement="Task_ObservationBuilder">
+        <dc:Bounds x="1030" y="390" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_Observation_di" bpmnElement="Event_Observation">
+        <dc:Bounds x="1250" y="412" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_SceneRelations_di" bpmnElement="Flow_SceneRelations">
+        <di:waypoint x="440" y="430" />
+        <di:waypoint x="510" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RelationsUncertainty_di" bpmnElement="Flow_RelationsUncertainty">
+        <di:waypoint x="700" y="430" />
+        <di:waypoint x="770" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_UncertaintyBuilder_di" bpmnElement="Flow_UncertaintyBuilder">
+        <di:waypoint x="960" y="430" />
+        <di:waypoint x="1030" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_BuilderObservation_di" bpmnElement="Flow_BuilderObservation">
+        <di:waypoint x="1190" y="430" />
+        <di:waypoint x="1250" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_Decide_di" bpmnElement="Participant_Decide" isHorizontal="true">
+        <dc:Bounds x="880" y="60" width="500" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_DecideInput_di" bpmnElement="Event_DecideInput">
+        <dc:Bounds x="1080" y="140" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Annotation_Li_di" bpmnElement="Annotation_Li">
+        <dc:Bounds x="530" y="310" width="220" height="45" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Annotation_Marques_di" bpmnElement="Annotation_Marques">
+        <dc:Bounds x="800" y="310" width="240" height="45" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="MessageFlow_ObservationDecide_di" bpmnElement="MessageFlow_ObservationDecide">
+        <di:waypoint x="1268" y="412" />
+        <di:waypoint x="1268" y="220" />
+        <di:waypoint x="1098" y="220" />
+        <di:waypoint x="1098" y="176" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_021k4kr_di" bpmnElement="Flow_021k4kr">
+        <di:waypoint x="485" y="660" />
+        <di:waypoint x="485" y="530" />
+        <di:waypoint x="370" y="530" />
+        <di:waypoint x="370" y="470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Li_di" bpmnElement="Association_Li">
+        <di:waypoint x="605" y="390" />
+        <di:waypoint x="630" y="355" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Marques_di" bpmnElement="Association_Marques">
+        <di:waypoint x="865" y="390" />
+        <di:waypoint x="900" y="355" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_0cqep4l">
+    <bpmndi:BPMNPlane id="BPMNPlane_18hjg14" bpmnElement="Activity_0do6e8x" />
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
