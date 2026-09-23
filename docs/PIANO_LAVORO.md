@@ -1,6 +1,7 @@
 # Piano di lavoro
 
 Cosa si sta facendo, in quale branch, cosa e' finito e cosa resta aperto.
+Per chi riprende il lavoro su DECIDI: [HANDOFF_DECIDI.md](HANDOFF_DECIDI.md).
 Si aggiorna a ogni passo, insieme a `MODIFICHE.md` (che invece dice cosa e'
 cambiato e perche'). Ultimo aggiornamento: 23/09/2026.
 
@@ -20,11 +21,13 @@ cambiato e perche'). Ultimo aggiornamento: 23/09/2026.
 | Passo | Branch | Stato |
 |---|---|---|
 | Osservatore oracolo (grafo dai contatti via `PrivilegedState`) | `osserva-oracolo` | fatto (`876eacc`) |
-| Main dell'oracolo: `Observation`, `PrivilegedState`, grafo DOT/SVG, JSON | `osserva-oracolo` | fatto, da committare |
-| `PrivilegedState` piu' ricco: centro di massa, tre attriti, forma e dimensioni | `osserva-oracolo` | fatto, da committare |
-| Main generale scena → OSSERVA → DECIDI → ESEGUI → TASK, componenti dal profilo; `run_episode` | `decidi` (da `osserva-oracolo`) | prossimo |
-| Interfacce student (`decide(observation)`) e teacher (`decide(observation, privileged)`) | `decidi` | prossimo |
-| Progettazione del decisore (le 12 domande del §20 delle regole) | `decidi` | da fare |
+| Main dell'oracolo: `Observation`, `PrivilegedState`, grafo DOT/SVG, JSON | `osserva-oracolo` | fatto (`0e4ae4f`) |
+| `PrivilegedState` piu' ricco: centro di massa, tre attriti, forma e dimensioni | `osserva-oracolo` | fatto (`0e4ae4f`) |
+| Main generale `main_pipeline.py`: scena → OSSERVA → DECIDI → ESEGUI → TASK, componenti dal profilo; `run_episode` unico ciclo | `decidi` (da `osserva-oracolo`) | fatto, da committare |
+| Interfacce student (`Decider.decide(observation)`) e teacher (`TeacherDecider.decide(observation, privileged)`) | `decidi` | fatto, da committare |
+| Struttura di `Observation`/`PrivilegedState` documentata ([STRUTTURA_OSSERVAZIONE.md](STRUTTURA_OSSERVAZIONE.md)), esempio `esempi/oracolo_seed7/` | `decidi` | fatto, da committare |
+| Grafo dell'oracolo: verso invertito in 19 archi su 147 (13%), target coperto sbagliato in 6 scene su 30; correggere con la forza verticale? | `osserva-oracolo` o `decidi` | da decidere |
+| Progettazione del decisore (le 12 domande del §20 delle regole) | `decidi` | prossimo |
 | `oracle_degraded`: rumore riproducibile su pose, oggetti e supporti (robustezza 1C), seme separato dalla scena | da decidere | dopo la baseline del decisore |
 | ESEGUI | `esegui` | da progettare |
 

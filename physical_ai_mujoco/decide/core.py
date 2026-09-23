@@ -3,12 +3,26 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 import numpy as np
-from physical_ai_mujoco.contracts import Observation, ObjectDecision
+from physical_ai_mujoco.contracts import Observation, ObjectDecision, PrivilegedState
 
 
 class Decider(ABC):
+    """Deployable (student) decider: it sees the Observation only."""
+
     @abstractmethod
     def decide(self, observation: Observation) -> ObjectDecision:
+        raise NotImplementedError
+
+
+class TeacherDecider(ABC):
+    """Simulation-only decider: it also sees the privileged branch of OBSERVE.
+
+    Kept apart from Decider on purpose: a student decider cannot receive
+    PrivilegedState, because its interface does not accept it.
+    """
+
+    @abstractmethod
+    def decide(self, observation: Observation, privileged: PrivilegedState) -> ObjectDecision:
         raise NotImplementedError
 
 

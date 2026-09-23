@@ -1,0 +1,210 @@
+{
+  "seed": 1390851128,
+  "object_count": 5,
+  "scene_seed": 2001665126,
+  "observation": {
+    "scene": {
+      "objects": [
+        {
+          "object_id": "object_000",
+          "role": "obstacle",
+          "type_id": "slab",
+          "position": [
+            0.019242953374936138,
+            0.07094509903388904,
+            0.0156534525575765
+          ],
+          "quaternion": [
+            0.9920288973969168,
+            0.00019895474051727485,
+            7.862392523201577e-05,
+            0.12601040022453144
+          ],
+          "shape": "box",
+          "size": [
+            0.11601520324556597,
+            0.08164136225172454,
+            0.03140335039068355
+          ],
+          "detected": true,
+          "perception_quality": 1.0
+        },
+        {
+          "object_id": "object_001",
+          "role": "obstacle",
+          "type_id": "disc",
+          "position": [
+            0.13792372598898964,
+            0.1459891319515526,
+            0.011007179609802676
+          ],
+          "quaternion": [
+            0.000240786943711444,
+            0.6158637124940196,
+            0.7878526677813247,
+            5.93681699243713e-05
+          ],
+          "shape": "cylinder",
+          "size": [
+            0.11728068822502948,
+            0.11728068822502948,
+            0.022097378939630295
+          ],
+          "detected": true,
+          "perception_quality": 1.0
+        },
+        {
+          "object_id": "object_002",
+          "role": "target",
+          "type_id": "pfm_1_target",
+          "position": [
+            0.0796959624225157,
+            0.14613049548026,
+            0.00996707940175355
+          ],
+          "quaternion": [
+            -0.2355310469230515,
+            0.21132058039064905,
+            -0.3724577225558255,
+            -0.8724356613224946
+          ],
+          "shape": "mesh",
+          "size": [
+            0.061429432,
+            0.1211436,
+            0.02
+          ],
+          "detected": true,
+          "perception_quality": 1.0
+        },
+        {
+          "object_id": "object_003",
+          "role": "obstacle",
+          "type_id": "plank",
+          "position": [
+            0.21212906372882614,
+            0.30648779015474453,
+            0.014650485578775673
+          ],
+          "quaternion": [
+            -9.287414922516785e-05,
+            0.27930300634157135,
+            0.960202962456145,
+            -0.0003048169853577784
+          ],
+          "shape": "box",
+          "size": [
+            0.192894193563542,
+            0.06730487596042603,
+            0.029350048202145814
+          ],
+          "detected": true,
+          "perception_quality": 1.0
+        },
+        {
+          "object_id": "object_004",
+          "role": "obstacle",
+          "type_id": "slab",
+          "position": [
+            0.11250428175280897,
+            -0.0009084701071833523,
+            0.03066591998616403
+          ],
+          "quaternion": [
+            0.12374544155476143,
+            -0.8494789328436342,
+            -0.5075619883134922,
+            0.07384738565793686
+          ],
+          "shape": "box",
+          "size": [
+            0.19014333106574205,
+            0.13105972219634063,
+            0.025053696806500318
+          ],
+          "detected": true,
+          "perception_quality": 1.0
+        }
+      ],
+      "target_id": "object_002",
+      "ground_height": -0.0,
+      "bounds": null,
+      "frame": "world",
+      "timestamp": 4.821999999999691,
+      "protected_zone": null,
+      "target_safe_zone": null,
+      "obstacle_drop_zone": null
+    },
+    "relations": {
+      "object_ids": [
+        "object_000",
+        "object_001",
+        "object_002",
+        "object_003",
+        "object_004"
+      ],
+      "relations": [
+        {
+          "source_id": "object_000",
+          "target_id": "object_004",
+          "relation_type": "support",
+          "relation_score": 1.0
+        },
+        {
+          "source_id": "object_001",
+          "target_id": "object_004",
+          "relation_type": "support",
+          "relation_score": 1.0
+        },
+        {
+          "source_id": "object_002",
+          "target_id": "object_000",
+          "relation_type": "support",
+          "relation_score": 1.0
+        }
+      ],
+      "estimator": "mujoco_contacts_oracle",
+      "available": true,
+      "frame": "world",
+      "timestamp": 4.821999999999691
+    },
+    "uncertainty": {
+      "objects": [
+        {
+          "object_id": "object_000",
+          "visible": true,
+          "detection_quality": 1.0,
+          "pose_quality": 1.0
+        },
+        {
+          "object_id": "object_001",
+          "visible": true,
+          "detection_quality": 1.0,
+          "pose_quality": 1.0
+        },
+        {
+          "object_id": "object_002",
+          "visible": true,
+          "detection_quality": 1.0,
+          "pose_quality": 1.0
+        },
+        {
+          "object_id": "object_003",
+          "visible": true,
+          "detection_quality": 1.0,
+          "pose_quality": 1.0
+        },
+        {
+          "object_id": "object_004",
+          "visible": true,
+          "detection_quality": 1.0,
+          "pose_quality": 1.0
+        }
+      ],
+      "unknown_space": false,
+      "provider": "exact",
+      "frame": "world",
+      "timestamp": 4.821999999999691
+    }
+  }
+}

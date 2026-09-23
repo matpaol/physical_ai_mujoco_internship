@@ -2,6 +2,7 @@
 
 from .core import (
     Decider,
+    TeacherDecider,
     RandomDecider,
     HighestObjectDecider,
     ImmediateTargetDecider,
@@ -10,6 +11,7 @@ from .core import (
 
 __all__ = [
     "Decider",
+    "TeacherDecider",
     "RandomDecider",
     "HighestObjectDecider",
     "ImmediateTargetDecider",

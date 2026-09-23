@@ -24,6 +24,11 @@ from physical_ai_mujoco.sensors import (
     resolve_detector_weights,
 )
 from physical_ai_mujoco.sensors.lidar import LidarConfig, LidarNoise
+from physical_ai_mujoco.decide import (
+    HighestObjectDecider,
+    ImmediateTargetDecider,
+    RandomDecider,
+)
 from physical_ai_mujoco.execute import IdealRemovalExecutor
 from physical_ai_mujoco.task import TargetExtractionTask
 
@@ -78,6 +83,22 @@ class ComponentBuilder:
                 / datasets.get("simulation", "configs/phase_0a/simulation.json")
             ),
         )
+
+    DECIDERS = {
+        "random": RandomDecider,
+        "highest": HighestObjectDecider,
+        "immediate_target": ImmediateTargetDecider,
+    }
+
+    def decider(self, name, rng=None):
+        """Decider chosen by the profile (``default_decider``)."""
+        if name not in self.DECIDERS:
+            raise ValueError(
+                f"Decider not available in the pipeline: {name!r} "
+                f"(available: {', '.join(self.DECIDERS)})"
+            )
+        factory = self.DECIDERS[name]
+        return factory(rng) if factory in (RandomDecider, ImmediateTargetDecider) else factory()
 
     def observer(self, env, objects=None):
         mode = env.get("components", {}).get("observer", "exact")

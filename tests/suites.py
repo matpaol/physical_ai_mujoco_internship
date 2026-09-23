@@ -29,6 +29,7 @@ SUITES = {
     ),
     "decidi": (
         "test_phase_0b.py",
+        "test_pipeline.py",
     ),
     "architettura": (
         "test_architecture.py",

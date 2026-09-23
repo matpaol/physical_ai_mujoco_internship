@@ -1,0 +1,17 @@
+digraph support_graph {
+  graph [rankdir=BT, fontname="Helvetica", labelloc=t];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#ffffff"];
+  label="Scene seed 2001665126 - support graph (lower -> upper)";
+  ground [label="ground", shape=plaintext, style=""];
+  "object_000" [label="object_000\nslab", fillcolor="#ffffff"];
+  "object_001" [label="object_001\ndisc", fillcolor="#ffffff"];
+  ground -> "object_001" [color="#aaaaaa"];
+  "object_002" [label="object_002\npfm_1_target\nTARGET", fillcolor="#fff2b3"];
+  ground -> "object_002" [color="#aaaaaa"];
+  "object_003" [label="object_003\nplank", fillcolor="#ffffff", color="#208050", penwidth=2];
+  ground -> "object_003" [color="#aaaaaa"];
+  "object_004" [label="object_004\nslab", fillcolor="#ffffff", color="#208050", penwidth=2];
+  "object_000" -> "object_004";
+  "object_001" -> "object_004";
+  "object_002" -> "object_000";
+}

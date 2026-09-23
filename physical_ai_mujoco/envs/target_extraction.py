@@ -254,12 +254,14 @@ class TargetExtractionEnv(gym.Env):
         self._last_selected_object_id = selected_id
         if selected_id is None:
             observation = self._observation()
+            info = self._build_info(0.0, True)
+            info["execution"] = None
             return (
                 observation,
                 self.task_rules.invalid_reward(),
                 False,
                 False,
-                self._build_info(0.0, True),
+                info,
             )
         execution = self.executor.execute(
             ObjectDecision(selected_id), self.simulator
@@ -268,12 +270,14 @@ class TargetExtractionEnv(gym.Env):
             # L'esecutore ideale conosce solo l'errore already_removed.
             # Gli esiti motori aggiuntivi saranno definiti nella fase 2.
             observation = self._observation()
+            info = self._build_info(0.0, True)
+            info["execution"] = execution
             return (
                 observation,
                 self.task_rules.invalid_reward(),
                 False,
                 False,
-                self._build_info(0.0, True),
+                info,
             )
         settling = self.session.settle()
         result = self.task_rules.evaluate(execution, self.session.current_positions())
@@ -286,6 +290,7 @@ class TargetExtractionEnv(gym.Env):
                 if k not in {"reward", "terminated", "disturbance"}
             }
         )
+        info["execution"] = execution
         if self.render_mode == "human":
             self.render()
         return observation, result.reward, result.terminated, False, info
@@ -316,9 +321,19 @@ class TargetExtractionEnv(gym.Env):
             result["state"] = self._state_observation()
         return result
 
+    def privileged_state(self):
+        """Simulation-only truth of the current scene, for teachers and evaluation.
+
+        It does not depend on the configured observer: even with the real
+        perception pipeline the teacher can read the simulator.
+        """
+        if self.simulator is None:
+            raise RuntimeError("Call reset() before privileged_state()")
+        return ExactObserver().privileged_state(self.simulator, self.target_id)
+
     def _state_observation(self):
-        # Percorso storico teacher: non e' l'Observation deployable di DECIDE.
-        return ExactObserver().privileged_state(self.simulator, self.target_id).as_vector()
+        # Legacy teacher path: not the deployable Observation given to DECIDE.
+        return self.privileged_state().as_vector()
 
     def _build_info(self, disturbance, invalid_action, settling=None):
         return dict(

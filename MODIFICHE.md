@@ -63,6 +63,124 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-23 16:37:12 — Documento di passaggio per DECIDI
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Branch `decidi`. Solo documentazione. `docs/HANDOFF_DECIDI.md`: stato
+dei branch, cosa esiste per DECIDI (interfacce, baseline, `run_episode`, main,
+encoder, esecutore ideale, reward di TASK), limiti misurati del grafo
+dell'oracolo, decisioni aperte in ordine, regole di lavoro, come si prova.
+Riga di rimando in `docs/PIANO_LAVORO.md`.
+
+**Perché:** Matteo apre una chat nuova per progettare il decisore; questa
+sessione era lunga e già compattata. Il documento evita che la nuova sessione
+riparta da zero o ripeta errori già fatti (lock di git dalla VM, cancellazioni,
+commenti `#` in zsh).
+
+**File:** `docs/HANDOFF_DECIDI.md` (nuovo), `docs/PIANO_LAVORO.md`, `MODIFICHE.md`.
+
+**Verifica:** riferimenti controllati sul codice del branch `decidi`
+(`decide/core.py`, `execute/core.py`, `task/core.py`, `configs/experiments/oracolo.json`,
+riga 93 di `experiments/episode.py`).
+
+---
+
+## 2026-09-23 16:32:10 — Struttura di Observation e PrivilegedState documentata, con esempio e verifica del grafo dell'oracolo
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Branch `decidi`. Solo documentazione, nessun cambiamento di codice.
+- `docs/STRUTTURA_OSSERVAZIONE.md`: tutti i campi di `Observation` (scena,
+  relazioni, incertezza) e di `PrivilegedState`, con tipi, unità, frame, verso
+  degli archi e valori prodotti dall'oracolo; tabella "chi vede cosa";
+  valutazione della struttura per DECIDI; opzioni di input per DECIDI come
+  domande aperte.
+- `docs/esempi/oracolo_seed7/`: `observation.json`, `privileged_state.json`,
+  `support_graph.dot/.svg` di una scena riproducibile (`main_test_oracle.py
+  --seed 7`: seed 1390851128, 5 oggetti, target `object_002`).
+
+**Perché:** Matteo vuole fissare, anche per la tesi, la struttura che OSSERVA
+consegna a DECIDI e capire se regge prima di progettare il decisore. La
+verifica con le forze di contatto (`mj_contactForce`, componente verticale;
+le somme per oggetto coincidono con `m·g`) mostra che la regola dell'oracolo
+"il centro più basso sostiene" inverte il verso di **19 archi su 147 (13%)**
+su 30 scene casuali e sbaglia se il target è coperto in **6 scene su 30**.
+Nella scena d'esempio l'arco `object_002 → object_000` è invertito: `000`
+regge il 27% del peso del target e sul target non preme nulla. Il contatto
+con il pavimento viene scartato e gli archi sono binari (`relation_score`
+sempre 1,0). Nessuna correzione è stata fatta: la decisione è di Matteo.
+
+**File:** `docs/STRUTTURA_OSSERVAZIONE.md` (nuovo), `docs/esempi/oracolo_seed7/`
+(nuovo), `docs/PIANO_LAVORO.md`, `MODIFICHE.md`.
+
+**Verifica:** campi confrontati con `contracts/observation.py` e
+`contracts/core.py`. Forze: per ogni oggetto della scena d'esempio la somma
+delle forze verticali ricevute è uguale al peso (es. `object_004`:
+1,807 + 1,102 + 0,747 = 3,656 N = 0,3727 kg · 9,81). Analisi su 30 scene
+eseguita sul Mac con script temporanei fuori dal repository.
+
+---
+
+## 2026-09-23 15:47:51 — Main generale della pipeline e interfaccia teacher di DECIDI
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Branch `decidi`.
+- `main_pipeline.py` (radice, avvio leggero) e
+  `physical_ai_mujoco/experiments/pipeline_main.py`: per ogni scena casuale
+  (seed e 4-10 oggetti) esegue il ciclo scena → OSSERVA → DECIDI → ESEGUI →
+  TASK con i componenti scelti dal profilo (default `oracolo.json`:
+  osservatore oracle, decisore `default_decider`, esecutore del profilo) e
+  mostra ogni passo: grafo e oggetti liberi, oggetto scelto e ruolo, esito
+  dell'esecuzione, reward, disturbo, crollo, target rimosso. Chiede se aprire
+  il viewer per la scena; a ogni passo: Invio, `a` fino alla fine, `o`
+  `Observation` e `PrivilegedState` completi, `q` ferma l'episodio. Alla fine
+  riepilogo (esito, ordine di rimozione, disturbo totale).
+- `physical_ai_mujoco/experiments/episode.py`: `run_episode(env, decider)`,
+  l'unico ciclo del sistema, con `StepRecord`/`EpisodeRecord`; il decisore
+  riceve solo cio' che la sua interfaccia ammette.
+- `decide.TeacherDecider`: `decide(observation, privileged)`, separato da
+  `Decider` (student, `decide(observation)`).
+- Environment: metodo pubblico `privileged_state()` (indipendente
+  dall'osservatore configurato; il vecchio vettore del teacher passa da li')
+  e `info["execution"]` con l'`ExecutionOutcome` di ESEGUI a ogni `step`.
+- `ComponentBuilder.decider(nome)`: `random`, `highest`, `immediate_target`.
+
+**Perche':** per progettare DECIDI serviva fissare cosa riceve e da chi. Il
+ciclo esisteva solo spezzato: l'environment faceva scena, esecuzione e task,
+ma DECIDI veniva chiamato da script diversi (menu 0B/1A, `politiche`), con
+funzioni che ricevevano l'intero environment, e nessuno rendeva impossibile
+dare lo stato privilegiato a uno student. L'esito di ESEGUI non usciva
+dall'environment (solo `removed` implicito nel reward). Matteo ha chiesto un
+main generale in cui entreranno anche ESEGUI e, piu' avanti, i decisori
+teacher/student: un unico `run_episode` evita che training, valutazione e
+visualizzazione abbiano cicli diversi.
+
+**File:** `main_pipeline.py` (nuovo), `physical_ai_mujoco/experiments/episode.py`
+(nuovo), `physical_ai_mujoco/experiments/pipeline_main.py` (nuovo),
+`physical_ai_mujoco/decide/{core,__init__}.py`,
+`physical_ai_mujoco/envs/target_extraction.py`,
+`physical_ai_mujoco/infrastructure/builder.py`, `tests/test_pipeline.py`
+(nuovo), `tests/suites.py`, `docs/PIANO_LAVORO.md`.
+
+**Verifica:** 6 test nuovi in `tests/test_pipeline.py` (suite `decidi`):
+il teacher riceve `PrivilegedState` a ogni passo e lo student no, anche se
+il ramo privilegiato viene comunque registrato; ogni passo ha un
+`ExecutionOutcome`, l'oggetto rimosso al passo k manca dall'osservazione del
+passo k+1, il successo coincide con le regole del task; `on_step` puo'
+fermare l'episodio; errore se si passa qualcosa che non e' un decisore; il
+builder costruisce i decisori per nome; il main gira senza terminale su una
+scena vera. Prova da terminale `python main_pipeline.py --seed 7`: 5
+oggetti, 3 passi, target estratto senza crollo. Nella VM Cowork del Mac:
+`test_pipeline`, `test_architecture`, `test_test_runner`,
+`test_observe_pipeline`, `test_oracle_preview` 49/49; `test_phase_0b`,
+`test_learned_detector`, `test_observe_menu`, `test_phase_0a` senza
+rendering 62/62. Viewer e suite completa **da provare sul Mac**. Completato
+prima del commit, suite completa sul Mac (macOS, conda `mujoco-tirocinio`):
+`python main_test.py --suite tutti` → **190 passati, 0 falliti** in 43,0 s
+(184 del commit precedente + 6 nuovi). Viewer non ancora provato.
+
 ## 2026-09-23 15:42:47 — Regola 8 del registro e piano di lavoro
 
 **Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
