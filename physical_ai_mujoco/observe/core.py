@@ -21,6 +21,7 @@ from .pipeline import (
     ExactUncertaintyProvider,
     GeometricRelationEstimator,
     ObservationBuilder,
+    OracleRelationEstimator,
     SceneUnderstanding,
     StereoBundleExtractor,
     StereoUncertaintyProvider,
@@ -37,7 +38,7 @@ class Observer(ABC):
 
 
 class PipelineObserver(Observer):
-    """Coordina i cinque blocchi senza esporli a DECIDE."""
+    """Runs the five OBSERVE blocks without exposing them to DECIDE."""
 
     def __init__(self, extractor, uncertainty_provider):
         self.extractor = extractor
@@ -54,10 +55,10 @@ class PipelineObserver(Observer):
 
     def observe(self, source, context: TaskContext) -> Observation:
         if not isinstance(context, TaskContext):
-            raise TypeError("Observer.observe richiede un TaskContext")
+            raise TypeError("Observer.observe requires a TaskContext")
         perceptual, evidence = self.extractor.extract(source)
         scene = self.scene_understanding.build(perceptual, evidence, context)
-        relations = self.relation_estimator.estimate(scene, evidence)
+        relations = self._estimate_relations(scene, evidence, source, context)
         uncertainty = self.uncertainty_provider.update(
             scene, evidence, self.previous_uncertainty, relations
         )
@@ -65,13 +66,17 @@ class PipelineObserver(Observer):
         self.previous_uncertainty = uncertainty
         return observation
 
+    def _estimate_relations(self, scene, evidence, source, context):
+        """Physical relationships block; deployable observers use evidence only."""
+        return self.relation_estimator.estimate(scene, evidence)
+
 
 class ExactObserver(PipelineObserver):
     def __init__(self):
         super().__init__(ExactStateExtractor(), ExactUncertaintyProvider())
 
     def privileged_state(self, simulator, target_id: str) -> PrivilegedState:
-        """Ramo separato simulation-only per teacher e valutazione."""
+        """Simulation-only branch for teachers, oracles and evaluation."""
 
         objects = []
         for item in simulator.scene.objects:
@@ -89,7 +94,41 @@ class ExactObserver(PipelineObserver):
                     item.instance_id == target_id,
                 )
             )
-        return PrivilegedState(tuple(objects))
+        return PrivilegedState(tuple(objects), _contact_supports(simulator))
+
+
+def _contact_supports(simulator) -> tuple[tuple[str, str], ...]:
+    """(lower_id, upper_id) pairs between present objects; the ground is dropped."""
+    present = {
+        item.instance_id
+        for item in simulator.scene.objects
+        if simulator.is_present(item.instance_id)
+    }
+    return tuple(sorted({
+        (lower, upper)
+        for upper, lowers in simulator.support_graph().items()
+        if upper in present
+        for lower in lowers
+        if lower in present and lower != upper
+    }))
+
+
+class OracleObserver(ExactObserver):
+    """Simulation-only reference observation for developing DECIDE and EXECUTE.
+
+    Same scene and uncertainty as ExactObserver; the physical relationships come
+    from OracleRelationEstimator, i.e. from the contact supports carried by
+    PrivilegedState, instead of the geometric rule. It deliberately reads the
+    privileged branch, so it must never be used as a deployable observer.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.relation_estimator = OracleRelationEstimator()
+
+    def _estimate_relations(self, scene, evidence, source, context):
+        privileged = self.privileged_state(source, context.target_id)
+        return self.relation_estimator.estimate(scene, privileged)
 
 
 class DegradedObserver(PipelineObserver):

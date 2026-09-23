@@ -58,7 +58,7 @@ git pull
 git status                    # cosa è cambiato
 git diff                      # le modifiche, riga per riga
 git add <file>                # oppure: git add .   (dopo aver guardato git status)
-git commit -m "Frase breve che dice cosa cambia"
+git commit -m "Short English sentence saying what changes"   # messaggi di commit in inglese
 git push
 ```
 

@@ -7,3 +7,5 @@ e [docs/DEIDEALIZATION.md](docs/DEIDEALIZATION.md).
 Lavoro su piu PC (git, pesi, archivio Drive dei risultati pesanti):
 [docs/SINCRONIZZAZIONE.md](docs/SINCRONIZZAZIONE.md) e
 [tools/archivio_drive/README.md](tools/archivio_drive/README.md).
+Stato della percezione congelata e osservatore oracolo per DECIDI/ESEGUI:
+[docs/OSSERVA_STATO.md](docs/OSSERVA_STATO.md).

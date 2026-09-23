@@ -23,12 +23,18 @@ class ObjectObservation:
 
 @dataclass(frozen=True)
 class PrivilegedState:
-    """Verita' simulata per teacher, supervisione e valutazione."""
+    """Simulator truth for teachers, oracles, labels and evaluation.
+
+    ``contact_supports`` holds ``(lower_id, upper_id)`` pairs between present
+    objects, read from the active simulator contacts on a settled scene. It is
+    the contact support graph, not the causal dependency ground truth.
+    """
 
     objects: tuple[ObjectObservation, ...]
+    contact_supports: tuple[tuple[str, str], ...] = ()
 
     def as_vector(self) -> np.ndarray:
-        """Codifica storica a 17 valori, riservata al teacher 1A."""
+        """Legacy 17-values-per-object encoding, reserved to the 1A teacher."""
         return np.asarray(
             [
                 v

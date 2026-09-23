@@ -46,6 +46,7 @@ def fake_simulator(mass=1.0):
         time=3.0,
         is_present=lambda name: True,
         get_object_state=lambda name: states[name],
+        support_graph=lambda: {"upper": ["lower"], "lower": ["terreno"]},
     )
 
 
@@ -242,3 +243,97 @@ def test_environment_exposes_operational_and_teacher_channels_separately():
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+# --------------------------------------------------------- MuJoCo contact oracle
+
+def _fake_oracle_simulator(supports):
+    simulator = fake_simulator()
+    simulator.support_graph = lambda: supports
+    return simulator
+
+
+def test_privileged_state_carries_contact_supports_between_present_objects():
+    # Ground and objects that are no longer in the scene are not supports.
+    supports = {"lower": ["terreno", "upper", "parked"], "upper": ["terreno"]}
+    privileged = ExactObserver().privileged_state(_fake_oracle_simulator(supports), "lower")
+    assert privileged.contact_supports == (("upper", "lower"),)
+
+
+def test_oracle_relations_come_from_contacts_not_geometry():
+    from physical_ai_mujoco.observe import OracleObserver
+
+    # The geometry says "upper" rests on "lower"; the contacts say the opposite.
+    supports = {"lower": ["terreno", "upper"], "upper": ["terreno"]}
+    observation = OracleObserver().observe(_fake_oracle_simulator(supports), LOWER_CONTEXT)
+    validate_observation(observation)
+    edges = [(r.source_id, r.target_id, r.relation_type, r.relation_score)
+             for r in observation.relations.relations]
+    assert edges == [("upper", "lower", "support", 1.0)]
+    assert observation.relations.estimator == "mujoco_contacts_oracle"
+    assert observation.relations.available is True
+    assert observation.relations.dependency_graph == {"lower": (), "upper": ("lower",)}
+
+
+def test_oracle_changes_only_the_relations_of_the_exact_observation():
+    from physical_ai_mujoco.observe import OracleObserver
+
+    simulator = _fake_oracle_simulator({"upper": ["lower"], "lower": ["terreno"]})
+    oracle = OracleObserver().observe(simulator, LOWER_CONTEXT)
+    exact = ExactObserver().observe(simulator, LOWER_CONTEXT)
+    assert oracle.scene == exact.scene
+    assert oracle.uncertainty == exact.uncertainty
+    assert oracle.relations.estimator != exact.relations.estimator
+
+
+def test_oracle_estimator_requires_the_privileged_branch():
+    from physical_ai_mujoco.observe.pipeline import OracleRelationEstimator
+
+    scene = ExactObserver().observe(fake_simulator(), LOWER_CONTEXT).scene
+    with pytest.raises(TypeError, match="PrivilegedState"):
+        OracleRelationEstimator().estimate(scene, SensorEvidence("world", 3.0))
+
+
+def test_oracle_graph_matches_mujoco_support_graph_on_real_scene():
+    gym = pytest.importorskip("gymnasium")
+    pytest.importorskip("mujoco")
+    import physical_ai_mujoco.envs  # noqa: F401  (registers the environment)
+    from physical_ai_mujoco.observe import OracleObserver
+
+    env = gym.make("TargetExtraction-v0", disable_env_checker=True,
+                   observer=OracleObserver(), obs_mode="state")
+    try:
+        env.reset(seed=3)
+        base = env.unwrapped
+        observation = base.decision_observation(refresh=True)
+        validate_observation(observation)
+        present = set(base.simulator.present_objects())
+        expected = {
+            (lower, upper)
+            for upper, lowers in base.simulator.support_graph().items()
+            if upper in present
+            for lower in lowers
+            if lower in present
+        }
+        got = {(r.source_id, r.target_id) for r in observation.relations.relations}
+        assert got == expected
+        assert expected, "the test pile must contain at least one object-on-object support"
+
+        # After a removal the graph follows the new scene.
+        removed = next(iter(present - {base.target_id}))
+        env.step(base.object_ids.index(removed))
+        after = base.decision_observation(refresh=True)
+        assert removed not in {obj.object_id for obj in after.scene.objects}
+        assert all(removed not in (r.source_id, r.target_id) for r in after.relations.relations)
+    finally:
+        env.close()
+
+
+def test_oracle_profile_builds_oracle_observer():
+    import json
+    from physical_ai_mujoco.infrastructure.builder import ComponentBuilder
+    from physical_ai_mujoco.observe import OracleObserver
+
+    root = Path(__file__).resolve().parents[1]
+    profile = json.loads((root / "configs/experiments/oracolo.json").read_text(encoding="utf-8"))
+    assert isinstance(ComponentBuilder().observer(profile["env_overrides"]), OracleObserver)

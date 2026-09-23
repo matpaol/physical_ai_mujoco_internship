@@ -12,6 +12,7 @@ from physical_ai_mujoco.contracts import (
     PerceptualState,
     PhysicalRelation,
     PhysicalRelationState,
+    PrivilegedState,
     SceneObject,
     SceneState,
     SensorEvidence,
@@ -308,6 +309,34 @@ class GeometricRelationEstimator:
             ),
             scene.frame,
             scene.timestamp,
+        )
+
+
+class OracleRelationEstimator:
+    """Simulation-only relation provider: support pairs from active contacts.
+
+    It does not estimate anything: it copies ``PrivilegedState.contact_supports``
+    into the relation contract, with score 1.0. Known limit of the simulator
+    graph: when two bodies touch, the one with the lower centre is reported as
+    the support, even for a sideways contact. This is the contact support graph,
+    not the causal dependency ground truth.
+    """
+
+    RELATION_TYPE = "support"
+    ESTIMATOR = "mujoco_contacts_oracle"
+
+    def estimate(self, scene: SceneState, privileged: PrivilegedState) -> PhysicalRelationState:
+        if not isinstance(privileged, PrivilegedState):
+            raise TypeError("OracleRelationEstimator requires a PrivilegedState")
+        ids = tuple(obj.object_id for obj in scene.objects)
+        known = set(ids)
+        relations = tuple(
+            PhysicalRelation(lower, upper, self.RELATION_TYPE, 1.0)
+            for lower, upper in privileged.contact_supports
+            if lower in known and upper in known
+        )
+        return PhysicalRelationState(
+            ids, relations, self.ESTIMATOR, True, scene.frame, scene.timestamp
         )
 
 

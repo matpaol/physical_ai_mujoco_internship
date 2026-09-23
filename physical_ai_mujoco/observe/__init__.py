@@ -4,6 +4,7 @@ from .core import (
     DegradedObserver,
     ExactObserver,
     Observer,
+    OracleObserver,
     PipelineObserver,
     SensorObserver,
     StereoObserver,
@@ -13,7 +14,7 @@ from .cad import CADMatch, CADMatcher
 from .geometry import LidarGeometryEstimator
 
 __all__ = [
-    "Observer", "PipelineObserver", "ExactObserver", "DegradedObserver",
+    "Observer", "PipelineObserver", "ExactObserver", "OracleObserver", "DegradedObserver",
     "StereoObserver", "SensorObserver",
     "EncodedObservation", "ObservationEncoder", "OBJECT_FEATURE_NAMES",
     "CADMatch", "CADMatcher",

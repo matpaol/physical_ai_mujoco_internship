@@ -58,6 +58,80 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-23 14:57:54 — Regola della lingua: codice e messaggi git in inglese
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Solo documentazione. `CLAUDE.md` (sezione 2) fissa la lingua:
+codice, test, messaggi di commit e di tag in inglese; i file esistenti si
+traducono quando vengono modificati; documentazione in italiano. L'esempio
+di commit in `docs/SINCRONIZZAZIONE.md` e' ora in inglese.
+
+**Perche':** regola stabilita da Matteo il 23/09 insieme alle regole di
+architettura del progetto; non era scritta da nessuna parte, quindi un'IA o
+una persona nuova sul repository non poteva saperla.
+
+**File:** `CLAUDE.md`, `docs/SINCRONIZZAZIONE.md`.
+
+**Verifica:** nessun codice cambiato, nessun test da rilanciare.
+
+## 2026-09-23 14:40:50 — Osservatore oracolo: grafo dei supporti dai contatti MuJoCo
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+Voce riscritta nella stessa sessione, prima del commit, dopo il confronto con
+`observa.md` v11 e le regole di architettura (codice in inglese).
+
+**Cosa:** Nuovo `OracleObserver` (`observe/core.py`), selezionabile con
+`"observer": "oracle"` e usato dal nuovo profilo `configs/experiments/oracolo.json`.
+Scena e incertezza identiche a `ExactObserver`; le relazioni fisiche vengono da
+`OracleRelationEstimator` (`observe/pipeline.py`, il provider "simulation-only"
+previsto dal Blocco 3 di `observa.md`), che copia nel contratto
+`PhysicalRelationState` le coppie di appoggio (sotto → sopra, tipo `support`,
+score 1,0, estimator `mujoco_contacts_oracle`). Le coppie arrivano dal ramo
+privilegiato: `PrivilegedState` ha un nuovo campo `contact_supports`
+(default vuoto) riempito da `ExactObserver.privileged_state()` con
+`simulator.support_graph()`, solo fra oggetti presenti, pavimento escluso.
+`PipelineObserver` ha un punto unico `_estimate_relations()` che l'oracolo
+ridefinisce. Codice nuovo e parti toccate in inglese. Nuovo
+`docs/OSSERVA_STATO.md` (stato della percezione al congelamento); rimandi in
+`docs/ARCHITECTURE.md` e `README_oa.md`.
+
+**Perche':** con il tutor si e' deciso di congelare la percezione reale e
+sviluppare DECIDI ed ESEGUI su un'osservazione di riferimento. Quella
+esistente (`ExactObserver`) ha pose esatte ma supporti stimati da una regola
+geometrica: nel benchmark `outputs/observe_tests/20260923_135955` (4 scene)
+la precisione dei supporti con pose esatte era 0,43, e su tre scene di prova
+(seed 3, 7, 11) la regola trova 14, 12 e 6 candidati contro 5, 3 e 3 appoggi
+veri. Il simulatore aveva gia' il grafo dei contatti (`support_graph()`,
+usato solo come verita' del benchmark). I contatti sono verita' del
+simulatore: per `observa.md` stanno in `PrivilegedState`, che "puo'
+alimentare la costruzione di un oracle delle relazioni", e non nei prodotti
+deployable (`SensorEvidence`). E' un grafo degli appoggi da contatto, non la
+verita' causale delle dipendenze: e' dichiarato nell'estimator e nella doc.
+L'oracolo si aggiunge agli osservatori esistenti: la pipeline reale resta
+selezionabile dal profilo.
+
+**File:** `physical_ai_mujoco/contracts/core.py`,
+`physical_ai_mujoco/observe/{pipeline,core,__init__}.py`,
+`physical_ai_mujoco/infrastructure/builder.py`,
+`configs/experiments/oracolo.json` (nuovo), `tests/test_observe_pipeline.py`,
+`docs/OSSERVA_STATO.md` (nuovo), `docs/ARCHITECTURE.md`, `README_oa.md`.
+
+**Verifica:** 6 test nuovi in `tests/test_observe_pipeline.py`:
+`PrivilegedState` porta solo appoggi fra oggetti presenti; relazioni prese dai
+contatti anche quando la geometria direbbe il contrario; scena e incertezza
+identiche a `ExactObserver`; errore esplicito se all'estimatore non arriva un
+`PrivilegedState`; su una scena MuJoCo vera (seed 3) il grafo coincide con
+`support_graph()` e dopo una rimozione non contiene piu' l'oggetto tolto; il
+profilo `oracolo.json` costruisce un `OracleObserver`. Nella VM Cowork del Mac
+(Linux aarch64, Python 3.12.14, MuJoCo 3.14): `test_observe_pipeline`,
+`test_architecture`, `test_phase_0a`, `test_learned_detector`,
+`test_observe_menu`, `test_test_runner` 68/68; `test_phase_0b` 32 passati, 1
+fallito per rendering OpenGL assente nella VM (`test_frame_capture_returns_frames`).
+Suite completa sul Mac (macOS, conda `mujoco-tirocinio`, Python 3.12):
+`python main_test.py --suite tutti` → **177 passati, 0 falliti** in 40,3 s
+(171 di prima + 6 nuovi).
+
 ## 2026-09-23 13:19:14 — Testo sempre in UTF-8: il benchmark OSSERVA falliva su Windows
 
 **Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.

@@ -45,6 +45,11 @@ Produce cio che il sistema decisionale puo conoscere. Le implementazioni
 previste sono, in ordine di de-idealizzazione: stato esatto, stereo simulata,
 osservazioni degradate e stereo reale.
 
+Accanto a queste c'e' l'**oracolo** (`OracleObserver`): pose esatte e grafo dei
+supporti letto dai contatti MuJoCo. Non e' una tappa della de-idealizzazione
+ma il riferimento su cui si sviluppano DECIDI ed ESEGUI mentre la percezione
+reale e' congelata (stato in [OSSERVA_STATO.md](OSSERVA_STATO.md)).
+
 ### DECIDE
 
 Sceglie il prossimo oggetto da rimuovere. Opera su una Observation e produce

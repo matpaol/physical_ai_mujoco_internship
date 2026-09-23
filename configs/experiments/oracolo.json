@@ -1,0 +1,17 @@
+{
+  "name": "Oracolo · DECIDI ed ESEGUI su osservazione MuJoCo esatta",
+  "available": true,
+  "description": "Pose esatte e grafo dei supporti dai contatti MuJoCo (OracleObserver): banco di prova di DECIDI ed ESEGUI con la percezione reale congelata.",
+  "default_decider": "random",
+  "operations": ["1", "2", "5", "6"],
+  "env_overrides": {
+    "components": {
+      "observer": "oracle",
+      "executor": "ideal_removal"
+    },
+    "task": {
+      "terminate_on_target": true,
+      "terminate_on_collapse": false
+    }
+  }
+}

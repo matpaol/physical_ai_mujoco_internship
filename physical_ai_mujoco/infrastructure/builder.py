@@ -14,6 +14,7 @@ from physical_ai_mujoco.observe import (
     DegradedObserver,
     ExactObserver,
     LidarGeometryEstimator,
+    OracleObserver,
     SensorObserver,
 )
 from physical_ai_mujoco.sensors import (
@@ -82,6 +83,8 @@ class ComponentBuilder:
         mode = env.get("components", {}).get("observer", "exact")
         if mode == "exact":
             return ExactObserver()
+        if mode == "oracle":
+            return OracleObserver()
         if mode == "degraded":
             settings = env.get("degraded_observation", {})
             return DegradedObserver(

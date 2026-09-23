@@ -31,6 +31,10 @@ si firma mai come se fosse l'autore umano.
   cambiare qualcosa, si cambia lì.
 - **La fase vive nella configurazione**, non nel codice. Nessun modulo deve
   contenere un `if` sulla fase o sulla modalità in cui sta girando.
+- **Lingua.** Codice in inglese: nomi, docstring, commenti, messaggi e test.
+  In inglese anche i messaggi di commit e dei tag git. I file esistenti in
+  italiano si traducono quando vengono modificati. Documentazione (`docs/`,
+  `MODIFICHE.md`, README) in italiano.
 
 ## 3. Verificare, non supporre
 
