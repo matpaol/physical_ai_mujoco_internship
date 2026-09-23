@@ -29,12 +29,12 @@ def fake_simulator(mass=1.0):
         SimpleNamespace(
             instance_id="lower", type_id="box", shape="box",
             size={"x": 0.1, "y": 0.1, "z": 0.1}, mass=mass,
-            friction=(0.5, 0.01, 0.01),
+            friction=(0.5, 0.01, 0.01), center_of_mass=(0.0, 0.0, 0.0),
         ),
         SimpleNamespace(
             instance_id="upper", type_id="box", shape="box",
             size={"x": 0.1, "y": 0.1, "z": 0.1}, mass=2.0,
-            friction=(0.7, 0.01, 0.01),
+            friction=(0.7, 0.02, 0.003), center_of_mass=(0.01, 0.0, -0.02),
         ),
     )
     states = {
@@ -251,6 +251,17 @@ def _fake_oracle_simulator(supports):
     simulator = fake_simulator()
     simulator.support_graph = lambda: supports
     return simulator
+
+
+def test_privileged_state_exposes_physical_truth_without_changing_teacher_vector():
+    privileged = ExactObserver().privileged_state(fake_simulator(), "lower")
+    upper = privileged.objects[1]
+    assert (upper.type_id, upper.shape, upper.size) == ("box", "box", (0.1, 0.1, 0.1))
+    assert upper.center_of_mass == (0.01, 0.0, -0.02)
+    assert (upper.friction, upper.torsional_friction, upper.rolling_friction) == (0.7, 0.02, 0.003)
+    # The legacy teacher encoding keeps 17 values per object.
+    assert privileged.as_vector().shape == (34,)
+    assert privileged.as_vector()[17 + 14] == pytest.approx(0.7)
 
 
 def test_privileged_state_carries_contact_supports_between_present_objects():

@@ -33,6 +33,11 @@ rispondere, mesi dopo, a una domanda sola: **perché questa riga è così?**
 >    passati» è una verifica; «sembra funzionare» non lo è. Se non è stata
 >    verificata, scriverlo — è un'informazione utile, nasconderlo no.
 > 7. **Niente voci a posteriori in blocco.** Si annota mentre si lavora.
+> 8. **Una voce gia' committata non si tocca piu'.** Correzioni e ripensamenti
+>    diventano voci nuove (regola 2). Prima del commit si possono solo
+>    completare i campi — tipicamente la «Verifica» con i risultati arrivati
+>    dopo — oppure riscrivere la voce, **dichiarandolo nel campo «Chi»** con
+>    il motivo. La data in testa resta quella della prima stesura.
 
 ---
 
@@ -57,6 +62,130 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 ---
 
 # Registro
+
+## 2026-09-23 15:42:47 — Regola 8 del registro e piano di lavoro
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Solo documentazione. Nuova regola 8 in cima a questo file: una
+voce committata non si modifica; prima del commit si possono completare i
+campi o riscriverla dichiarandolo nel «Chi». Nuovo `docs/PIANO_LAVORO.md`
+(cosa si fa in quale branch, cosa e' fatto, cosa resta aperto), citato nella
+tabella di `CLAUDE.md`.
+
+**Perche':** controllando il registro su richiesta di Matteo e' emerso che
+due voci di oggi erano state riscritte prima del commit (oracolo e
+anteprima), e solo una lo dichiarava; la regola 2 vieta di modificare le voci
+vecchie ma non diceva nulla di quelle non ancora committate. Inoltre il
+registro dice cosa e' cambiato ma non cosa manca: il piano del lavoro
+(branch `osserva-oracolo`, poi `decidi`, poi robustezza ed ESEGUI) esisteva
+solo nella conversazione.
+
+**File:** `MODIFICHE.md`, `docs/PIANO_LAVORO.md` (nuovo), `CLAUDE.md`.
+
+**Verifica:** nessun codice cambiato. Controllato che, rispetto al commit
+`876eacc`, questo file abbia solo righe aggiunte nelle voci gia' committate.
+
+## 2026-09-23 15:37:39 — `PrivilegedState` piu' ricco per il teacher: centro di massa, attriti, forma
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** `ObjectObservation` (contratto del ramo privilegiato,
+`contracts/core.py`) ha sei campi nuovi, facoltativi e in coda: `type_id`,
+`shape`, `size` (ingombri x, y, z veri in metri), `center_of_mass`
+(scostamento dal centro geometrico, assi del corpo), `torsional_friction`,
+`rolling_friction`. `ExactObserver.privileged_state()` li riempie dalla
+descrizione della scena. Il vettore storico del teacher PPO
+(`as_vector()`, 17 valori per oggetto) e' invariato. Il main dell'oracolo
+(`evaluation/oracle_preview.py`) li mostra nella tabella PRIVILEGED STATE
+(attriti radente/torsionale/volvente, centro di massa in mm) e li salva in
+`privileged_state.json`.
+
+**Perche':** preparazione di DECIDI con teacher e student: il teacher puo'
+usare il ramo privilegiato, e Matteo ha chiesto attriti, masse e centri di
+massa. Il `PrivilegedState` esportava solo l'attrito radente e nessun centro
+di massa, benche' la scena li randomizzi gia' (su 5 oggetti della scena di
+prova, seed 7: centri di massa spostati fino a 13,5 mm, attrito volvente fra
+0,001 e 0,005): un teacher non poteva sapere perche' un oggetto si ribalta.
+Campi in coda con default per non cambiare i costruttori esistenti ne' il
+vettore del PPO. Forze di contatto e altro si aggiungono quando il teacher ne
+avra' bisogno.
+
+**File:** `physical_ai_mujoco/contracts/core.py`, `physical_ai_mujoco/observe/core.py`,
+`physical_ai_mujoco/evaluation/oracle_preview.py`, `tests/test_observe_pipeline.py`,
+`tests/test_oracle_preview.py`.
+
+**Verifica:** test nuovo
+`test_privileged_state_exposes_physical_truth_without_changing_teacher_vector`
+(campi riempiti dalla scena; vettore ancora 17 valori per oggetto, attrito
+radente all'indice 14). Nella VM Cowork del Mac: `test_observe_pipeline`,
+`test_oracle_preview`, `test_architecture`, `test_test_runner` 43/43;
+`test_phase_0b` senza i test di rendering 37/37 (il vettore del teacher passa
+da `privileged_state()`). Completato prima del commit, suite completa sul
+Mac (macOS, conda `mujoco-tirocinio`): `python main_test.py --suite tutti` →
+**184 passati, 0 falliti** in 39,5 s (177 del commit precedente + 7 nuovi).
+
+## 2026-09-23 15:08:41 — Anteprima dell'osservatore oracolo su scene casuali
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+Voce riscritta due volte nella stessa sessione, prima del commit: la prima
+stesura descriveva uno script in `evaluation/`; Matteo lo ha voluto come main
+del modulo in `observe/`, poi con grafo dei supporti e `PrivilegedState` oltre
+all'`Observation`. La data e' quella della prima stesura.
+
+**Cosa:** Nuovo main della pipeline sintetica di OSSERVA,
+`physical_ai_mujoco/observe/main_test_oracle.py`, accanto al laboratorio
+della percezione `main_test_osserva.py` e con la stessa struttura: il main e'
+un avvio leggero, la logica sta in `physical_ai_mujoco/evaluation/oracle_preview.py`
+(in inglese), eseguibile anche direttamente (pulsante Run dell'editor).
+Per ogni scena, seed e numero di oggetti casuali (4-10), environment costruito
+dal profilo `configs/experiments/oracolo.json`, e le **due uscite di OSSERVA**
+in simulazione:
+- `Observation` per DECIDI, validata con `validate_observation`: oggetti
+  (tipo, ruolo, posa, dimensioni), grafo dei supporti, oggetti solo sul
+  pavimento, oggetti liberi sopra, cosa poggia sul target direttamente o
+  attraverso altri oggetti, riepilogo dell'incertezza;
+- `PrivilegedState` (solo simulazione: teacher, oracolo, valutazione):
+  massa, attrito, velocita' residua, presenza, target, e controllo che le
+  coppie di contatto coincidano con il grafo dell'`Observation`.
+Entrambe vengono salvate in `outputs/observe_tests/oracle_<data_ora>/scene_NNN/`
+(`observation.json`, `privileged_state.json`) insieme al grafo dei supporti
+(`support_graph.dot` e, se c'e' Graphviz, `support_graph.svg`: dal basso verso
+l'alto, target in giallo, oggetti liberi sopra bordati di verde). Poi chiede se
+aprire l'immagine del grafo, se aprire il viewer MuJoCo (target evidenziato,
+finestra reattiva finche' non si preme Invio) e se passare a una nuova scena.
+`--seed` ripete la sequenza, `--output` cambia la cartella. Senza terminale
+interattivo elabora una scena ed esce. Registrato nella suite `osserva` di
+`tests/suites.py`.
+
+**Perche':** l'unico test di OSSERVA era ancora il laboratorio della
+percezione congelata (`main_test_osserva.py`), che chiede profilo, sorgenti,
+disturbi, numero di scene e oggetti e confronta cinque sorgenti. Serviva un
+main che producesse solo cio' che DECIDI e il teacher riceveranno, cioe'
+`Observation` e `PrivilegedState`, e che li lasciasse su file: la prima
+versione di questa anteprima stampava solo l'`Observation` e Matteo ha
+chiesto esplicitamente anche il grafo e lo stato privilegiato. Il main sta in
+`observe/`, come chiesto da Matteo; la logica sta in `evaluation/` perche'
+costruisce l'environment (Gymnasium), che i file di `observe/` non importano
+(`test_contract_and_policy_modules_do_not_import_backend_or_environment`): e'
+lo stesso schema del vecchio main, che richiama `evaluation/observe_benchmark.py`.
+
+**File:** `physical_ai_mujoco/observe/main_test_oracle.py` (nuovo),
+`physical_ai_mujoco/evaluation/oracle_preview.py` (nuovo),
+`tests/test_oracle_preview.py` (nuovo), `tests/suites.py`, `docs/OSSERVA_STATO.md`.
+
+**Verifica:** 6 test nuovi: sequenza di scene riproducibile e numero di
+oggetti nell'intervallo; descrizione di una pila a tre (target → middle →
+top); ramo privilegiato mostrato a parte e coerente con il grafo; file JSON e
+grafo DOT scritti e rileggibili; il main di OSSERVA avvia l'anteprima;
+esecuzione non interattiva su una scena MuJoCo vera con seed 7. Nella VM
+Cowork del Mac: `test_oracle_preview`, `test_observe_pipeline`,
+`test_architecture`, `test_test_runner` 42/42. Grafo della scena di prova
+(seed 7) reso in PNG e controllato a vista. Il viewer e l'apertura
+dell'immagine non sono verificabili nella VM (niente display). Completato
+prima del commit: Matteo ha provato il main e il viewer sul Mac ("il main
+osserva oracolo funziona"); l'apertura dell'immagine del grafo resta da
+provare. Suite completa sul Mac: 184 passati, 0 falliti in 39,5 s.
 
 ## 2026-09-23 14:57:54 — Regola della lingua: codice e messaggi git in inglese
 

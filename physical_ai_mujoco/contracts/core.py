@@ -10,15 +10,28 @@ STATE_FEATURES_PER_OBJECT = 17
 
 @dataclass(frozen=True)
 class ObjectObservation:
+    """Simulator truth about one object, part of the privileged branch.
+
+    The first nine fields form the legacy 17-value teacher vector and must not
+    change. The optional fields below extend the truth available to teachers
+    without altering that vector.
+    """
+
     object_id: str
     position: tuple[float, float, float]
     quaternion: tuple[float, float, float, float]
     linear_velocity: tuple[float, float, float]
     angular_velocity: tuple[float, float, float]
     mass: float
-    friction: float
+    friction: float  # sliding friction coefficient
     present: bool
     is_target: bool
+    type_id: str | None = None
+    shape: str | None = None
+    size: tuple[float, float, float] | None = None  # full extents x, y, z [m]
+    center_of_mass: tuple[float, float, float] | None = None  # offset from the geometric centre, body frame [m]
+    torsional_friction: float | None = None
+    rolling_friction: float | None = None
 
 
 @dataclass(frozen=True)

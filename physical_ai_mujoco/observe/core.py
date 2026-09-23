@@ -14,6 +14,7 @@ from physical_ai_mujoco.contracts import (
 )
 
 from .pipeline import (
+    _size_xyz,
     DegradedStateExtractor,
     DegradedUncertaintyProvider,
     DepthBundleExtractor,
@@ -92,6 +93,12 @@ class ExactObserver(PipelineObserver):
                     item.friction[0],
                     simulator.is_present(item.instance_id),
                     item.instance_id == target_id,
+                    type_id=item.type_id,
+                    shape=item.shape,
+                    size=_size_xyz(item),
+                    center_of_mass=tuple(float(value) for value in item.center_of_mass),
+                    torsional_friction=float(item.friction[1]),
+                    rolling_friction=float(item.friction[2]),
                 )
             )
         return PrivilegedState(tuple(objects), _contact_supports(simulator))

@@ -15,6 +15,7 @@ SUITES = {
         "test_sensor_pipeline_completion.py",
         "test_sensors_extended.py",
         "test_simulated_stereo.py",
+        "test_oracle_preview.py",
     ),
     "validazione_sensori": (
         "test_sensor_validation.py",

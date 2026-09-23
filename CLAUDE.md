@@ -50,6 +50,7 @@ si firma mai come se fosse l'autore umano.
 | `configs/phase_0b/` | i parametri di Fase 0B: task, scena, simulazione, dataset |
 | `docs/SINCRONIZZAZIONE.md` | lavorare su più PC: cosa va in git, cosa su Drive, comandi git |
 | `tools/archivio_drive/README.md` | archivio Drive dei risultati pesanti: struttura, comandi, regole |
+| `docs/PIANO_LAVORO.md` | piano corrente: branch, cosa e' fatto, cosa resta aperto (aggiornarlo a ogni passo) |
 
 ## 5. Risultati pesanti e più PC
 

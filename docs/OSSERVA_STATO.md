@@ -86,3 +86,14 @@ SceneState + PhysicalRelationState + UncertaintyState â”€> Observation Builder â
   col centro piu' basso, anche se il contatto e' laterale.
 - `OracleObserver` legge di proposito il ramo privilegiato: non va mai usato
   come osservatore deployable. Scena e incertezza sono identiche a `ExactObserver`.
+
+Per vederlo al lavoro su scene casuali: per ogni scena stampa e salva le due
+uscite di OSSERVA, `Observation` per DECIDI e `PrivilegedState` (solo
+simulazione), con il grafo dei supporti in DOT/SVG, in
+`outputs/observe_tests/oracle_<data_ora>/scene_NNN/`. Nessuna domanda di
+configurazione: chiede solo se aprire il grafo, il viewer e la scena successiva.
+
+```bash
+python physical_ai_mujoco/observe/main_test_oracle.py
+python physical_ai_mujoco/observe/main_test_oracle.py --seed 1234   # rivede la stessa sequenza
+```
