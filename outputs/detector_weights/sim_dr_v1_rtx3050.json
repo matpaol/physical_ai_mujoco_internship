@@ -1,0 +1,175 @@
+{
+  "name": "sim_dr_v1_rtx3050",
+  "created_at": "2026-09-22T12:43:01+02:00",
+  "finished_at": "2026-09-22T19:37:26+02:00",
+  "weights": "C:\\Users\\paoli\\Desktop\\physical_ai_mujoco_internship\\outputs\\detector_weights\\sim_dr_v1_rtx3050.pt",
+  "class_names": [
+    "obstacle",
+    "pfm_1_target"
+  ],
+  "training_recipe": {
+    "kind": "training",
+    "name": "sim_dr_v1_rtx3050",
+    "description": "Pre-training su sim_dr_v1 per RTX 3050 Laptop (4 GB VRAM): batch ridotto rispetto alla ricetta GPU standard.",
+    "dataset": "datasets/generated/sim_dr_v1",
+    "base_model": "yolo11s-seg.pt",
+    "epochs": 200,
+    "image_size": 640,
+    "batch": 8,
+    "patience": 40,
+    "seed": 0,
+    "device": "auto",
+    "ultralytics": {
+      "hsv_h": 0.0,
+      "hsv_s": 0.0,
+      "hsv_v": 0.3,
+      "fliplr": 0.5,
+      "workers": 4
+    },
+    "evaluation": {
+      "split": "test",
+      "iou_threshold": 0.5,
+      "confidence": 0.25,
+      "band_width": 0.1,
+      "required_recall": 0.8,
+      "min_samples_per_band": 10
+    }
+  },
+  "resolved": {
+    "dataset": "C:\\Users\\paoli\\Desktop\\physical_ai_mujoco_internship\\datasets\\generated\\sim_dr_v1",
+    "base_model": "yolo11s-seg.pt",
+    "device": "0",
+    "ultralytics_run_directory": "C:\\Users\\paoli\\Desktop\\physical_ai_mujoco_internship\\outputs\\detector_training\\sim_dr_v1_rtx3050"
+  },
+  "parent": null,
+  "dataset_summary": {
+    "recipe_name": "sim_dr_v1",
+    "created_at": "2026-09-21T20:48:56+02:00",
+    "generation_seconds": 1437.6,
+    "class_names": [
+      "obstacle",
+      "pfm_1_target"
+    ],
+    "scene_count": 800,
+    "image_count": 3392,
+    "randomization": true,
+    "mean_target_visible_fraction": 0.31555519489426476,
+    "splits": {
+      "train": {
+        "images": 2432,
+        "target_labelled": 1413,
+        "target_absent": 226,
+        "hard_visibility_views": 192,
+        "visibility_bands": {
+          "0.10-0.20": 169,
+          "0.00-0.10": 267,
+          "0.20-0.30": 159,
+          "nascosto": 648,
+          "0.90-1.00": 295,
+          "0.30-0.40": 146,
+          "0.70-0.80": 71,
+          "0.40-0.50": 113,
+          "0.80-0.90": 87,
+          "0.60-0.70": 110,
+          "0.50-0.60": 115,
+          "fuori_inquadratura": 26
+        },
+        "object_counts": {
+          "6": 288,
+          "7": 228,
+          "9": 274,
+          "4": 236,
+          "1": 256,
+          "5": 260,
+          "2": 236,
+          "8": 214,
+          "10": 216,
+          "3": 224
+        }
+      },
+      "val": {
+        "images": 480,
+        "target_labelled": 254,
+        "target_absent": 48,
+        "hard_visibility_views": 0,
+        "visibility_bands": {
+          "0.40-0.50": 21,
+          "0.50-0.60": 18,
+          "nascosto": 154,
+          "0.60-0.70": 12,
+          "0.10-0.20": 32,
+          "0.00-0.10": 51,
+          "0.70-0.80": 19,
+          "0.30-0.40": 31,
+          "0.90-1.00": 53,
+          "0.20-0.30": 32,
+          "0.80-0.90": 9
+        },
+        "object_counts": {
+          "2": 64,
+          "5": 44,
+          "7": 56,
+          "3": 20,
+          "4": 52,
+          "8": 52,
+          "6": 56,
+          "9": 56,
+          "1": 40,
+          "10": 40
+        }
+      },
+      "test": {
+        "images": 480,
+        "target_labelled": 231,
+        "target_absent": 32,
+        "hard_visibility_views": 0,
+        "visibility_bands": {
+          "nascosto": 177,
+          "0.00-0.10": 68,
+          "0.10-0.20": 30,
+          "0.60-0.70": 14,
+          "0.50-0.60": 32,
+          "0.30-0.40": 22,
+          "0.20-0.30": 14,
+          "0.90-1.00": 38,
+          "0.40-0.50": 27,
+          "fuori_inquadratura": 6,
+          "0.80-0.90": 11,
+          "0.70-0.80": 9
+        },
+        "object_counts": {
+          "2": 48,
+          "8": 68,
+          "1": 40,
+          "3": 52,
+          "5": 60,
+          "9": 48,
+          "7": 48,
+          "4": 32,
+          "6": 36,
+          "10": 48
+        }
+      }
+    },
+    "mujoco_version": "3.13.0",
+    "format": "PNG in grigio + maschere lossless + JSON + poligoni YOLO-seg"
+  },
+  "environment": {
+    "python": "3.12.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "ultralytics": "8.4.158",
+    "torch": "2.6.0+cu124",
+    "git_commit": "e78e33d94b1a373bcb43e029bd3419c06b2b574c"
+  },
+  "metrics": {
+    "metrics/precision(B)": 0.9036230665695897,
+    "metrics/recall(B)": 0.7828314990597631,
+    "metrics/mAP50(B)": 0.8446427498166671,
+    "metrics/mAP50-95(B)": 0.682569721767451,
+    "metrics/precision(M)": 0.9036138575971608,
+    "metrics/recall(M)": 0.784421011187423,
+    "metrics/mAP50(M)": 0.8425566535708002,
+    "metrics/mAP50-95(M)": 0.6406348801465506,
+    "fitness": 1.3232046019140016
+  }
+}

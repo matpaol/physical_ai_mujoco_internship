@@ -221,11 +221,11 @@ def generate_dataset(
         if env is not None:
             env.close()
 
-    (output / "manifest.jsonl").write_text("".join(json.dumps(item) + "\n" for item in manifest))
+    (output / "manifest.jsonl").write_text("".join(json.dumps(item) + "\n" for item in manifest), encoding="utf-8")
     write_data_yaml(output / "data.yaml", output, class_names)
     summary = _summary(recipe, manifest, class_names, time.monotonic() - started)
-    (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    (output / "recipe.json").write_text(json.dumps(recipe.source, indent=2) + "\n")
+    (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    (output / "recipe.json").write_text(json.dumps(recipe.source, indent=2) + "\n", encoding="utf-8")
     return summary
 
 

@@ -99,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     report = validate_cad(args.stl, args.seed)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2) + "\n")
+        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     for fraction in (0.1, 0.3, 0.5, 0.7, 0.9):
         rows = [row for row in report["rows"] if row["exposure_fraction"] == fraction]
         accepted = [row for row in rows if row["accepted"]]

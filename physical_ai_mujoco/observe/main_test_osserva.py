@@ -192,7 +192,7 @@ def _write_error_log() -> Path | None:
     path = ERROR_LOG_DIR / f"osserva_error_{stamp}.log"
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(traceback.format_exc())
+        path.write_text(traceback.format_exc(), encoding="utf-8")
     except OSError:
         return None
     return path

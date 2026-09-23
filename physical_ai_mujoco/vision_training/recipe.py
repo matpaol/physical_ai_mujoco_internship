@@ -404,7 +404,7 @@ def load_recipe(path: str | Path) -> DatasetRecipe | TrainingRecipe:
     """Legge una ricetta di dataset o di training dal suo campo `kind`."""
     path = Path(path)
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
         raise RecipeError(f"{path.name}: JSON non valido ({error})") from error
     if not isinstance(data, dict) or data.get("kind") not in ("dataset", "training"):
@@ -419,7 +419,7 @@ def available_recipes(kind: str, directory: Path = RECIPE_DIR) -> list[tuple[Pat
     result = []
     for path in sorted(directory.glob("*.json")):
         try:
-            data = json.loads(path.read_text())
+            data = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
         if isinstance(data, dict) and data.get("kind") == kind:

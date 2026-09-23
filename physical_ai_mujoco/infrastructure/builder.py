@@ -43,7 +43,7 @@ class ComponentBuilder:
         env = json.loads(
             Path(
                 env_config_path or PROJECT_ROOT / "configs/phase_0b/env.json"
-            ).read_text()
+            ).read_text(encoding="utf-8")
         )
         from physical_ai_mujoco.infrastructure.experiment import selected_profile
 

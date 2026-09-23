@@ -17,7 +17,7 @@ def save_run_metadata(path, parameters, metrics=None):
         except PackageNotFoundError:
             versions[name] = None
     configs = {
-        str(p.relative_to(PROJECT_ROOT)): json.loads(p.read_text())
+        str(p.relative_to(PROJECT_ROOT)): json.loads(p.read_text(encoding="utf-8"))
         for folder in ("configs", "datasets")
         for p in sorted((PROJECT_ROOT / folder).rglob("*.json"))
     }
@@ -28,7 +28,8 @@ def save_run_metadata(path, parameters, metrics=None):
 
     def git(*args):
         result = subprocess.run(
-            ["git", *args], cwd=PROJECT_ROOT, capture_output=True, text=True
+            ["git", *args], cwd=PROJECT_ROOT, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
         )
         return result.stdout.strip() if result.returncode == 0 else None
 
@@ -54,4 +55,4 @@ def save_run_metadata(path, parameters, metrics=None):
     )
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(document, indent=2) + "\n")
+    path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")

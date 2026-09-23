@@ -79,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         "profiles": results,
         "all_ok": all(item["ok"] for item in results),
     }
-    destination.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n")
+    destination.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     for profile in results:
         print(f"{profile['profile']}:")
         for item in profile["modes"]:

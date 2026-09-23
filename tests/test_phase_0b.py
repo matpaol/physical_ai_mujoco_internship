@@ -590,12 +590,12 @@ def test_uniform_objects_keep_the_compiler_derived_inertia():
     from physical_ai_mujoco.envs.target_extraction import PROJECT_ROOT
 
     rules = json.loads(
-        (PROJECT_ROOT / "configs/phase_0b/scene_rules.json").read_text()
+        (PROJECT_ROOT / "configs/phase_0b/scene_rules.json").read_text(encoding="utf-8")
     )
     rules["randomisation"]["center_of_mass_jitter"] = 0.0
     with tempfile.TemporaryDirectory() as folder:
         path = _Path(folder) / "scene_rules.json"
-        path.write_text(json.dumps(rules))
+        path.write_text(json.dumps(rules), encoding="utf-8")
         environment = make_env(
             obs_mode="state", object_count=3, scene_rules_path=str(path)
         )

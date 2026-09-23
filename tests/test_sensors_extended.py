@@ -45,7 +45,7 @@ def test_rig_projects_and_unprojects_both_eyes(tmp_path):
     path = tmp_path / "rig.json"
     path.write_text(json.dumps({"intrinsics": rig.intrinsics.tolist(),
                                 "world_from_left": rig.world_from_left.tolist(),
-                                "baseline": 0.2, "height": 20, "width": 40}))
+                                "baseline": 0.2, "height": 20, "width": 40}), encoding="utf-8")
     assert StereoRig.from_calibration_file(path).project(point) == pytest.approx(rig.project(point))
     with pytest.raises(ValueError, match="dietro"):
         rig.project((0, 0, -1))

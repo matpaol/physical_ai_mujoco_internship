@@ -1,4 +1,5 @@
 .DS_Store
+._*
 .idea/
 .vscode/
 .venv/
@@ -13,7 +14,10 @@ __pycache__/
 build/
 dist/
 
-outputs/
+# outputs/ resta fuori da git, tranne i pesi consegnati del visore.
+# Il resto dei risultati pesanti va nell'archivio Drive: docs/SINCRONIZZAZIONE.md
+outputs/*
+!outputs/detector_weights/
 _to_delete/
 *.zip
 
@@ -21,3 +25,7 @@ _to_delete/
 # generati/log locali
 MUJOCO_LOG.TXT
 datasets/generated/
+
+# modelli base di Ultralytics: si riscaricano da soli al primo training
+/yolo*.pt
+/weights/

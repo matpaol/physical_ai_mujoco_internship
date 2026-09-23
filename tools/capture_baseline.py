@@ -76,5 +76,5 @@ for options in [
         finally:
             env.close()
 Path(sys.argv[2]).parent.mkdir(parents=True, exist_ok=True)
-Path(sys.argv[2]).write_text(json.dumps(clean(result), sort_keys=True))
+Path(sys.argv[2]).write_text(json.dumps(clean(result), sort_keys=True), encoding="utf-8")
 print(len(result["episodes"]), "episodes captured")

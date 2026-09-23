@@ -68,7 +68,7 @@ def test_deciders_use_data_and_preserve_ties_and_random_sequence():
 def test_contract_and_policy_modules_do_not_import_backend_or_environment():
     for folder in ("contracts", "decide", "task", "observe"):
         for path in (ROOT / "physical_ai_mujoco" / folder).glob("*.py"):
-            for node in ast.walk(ast.parse(path.read_text())):
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
                 imports = []
                 if isinstance(node, ast.Import):
                     imports = [alias.name for alias in node.names]
@@ -90,7 +90,7 @@ def test_contract_and_policy_modules_do_not_import_backend_or_environment():
 
 def test_sensor_implementations_do_not_import_mujoco():
     for path in (ROOT / "physical_ai_mujoco" / "sensors").rglob("*.py"):
-        for node in ast.walk(ast.parse(path.read_text())):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]
             elif isinstance(node, ast.ImportFrom):
@@ -103,7 +103,7 @@ def test_sensor_implementations_do_not_import_mujoco():
 def test_vision_training_changes_appearance_only_through_simulator_api():
     """Il visore non tocca MuJoCo: usa Simulator.apply_visual_conditions."""
     for path in (ROOT / "physical_ai_mujoco" / "vision_training").rglob("*.py"):
-        for node in ast.walk(ast.parse(path.read_text())):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]
             elif isinstance(node, ast.ImportFrom):
@@ -116,7 +116,7 @@ def test_vision_training_changes_appearance_only_through_simulator_api():
 def test_visual_conditions_are_plain_data():
     """Le condizioni visive si possono campionare senza caricare MuJoCo."""
     path = ROOT / "physical_ai_mujoco" / "simulation" / "visual_conditions.py"
-    for node in ast.walk(ast.parse(path.read_text())):
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             names = [alias.name for alias in node.names] if isinstance(node, ast.Import) else [node.module or ""]
             assert not any(name.startswith("mujoco") for name in names)
@@ -124,7 +124,7 @@ def test_visual_conditions_are_plain_data():
 
 def test_shared_contracts_do_not_depend_on_sensor_implementations():
     for path in (ROOT / "physical_ai_mujoco" / "contracts").glob("*.py"):
-        for node in ast.walk(ast.parse(path.read_text())):
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if isinstance(node, ast.Import):
                 names = [alias.name for alias in node.names]
             elif isinstance(node, ast.ImportFrom):
@@ -290,13 +290,13 @@ def test_experiment_profile_configures_components_without_phase_branches(
             "components": {"observer": "exact", "executor": "ideal_removal"}
         },
     )
-    path.write_text(json.dumps(data))
+    path.write_text(json.dumps(data), encoding="utf-8")
     monkeypatch.setenv("PHYSICAL_AI_EXPERIMENT", str(path))
     builder = ComponentBuilder()
     inputs = builder.load()
     assert isinstance(builder.observer(inputs.env), ExactObserver)
     data["available"] = False
-    path.write_text(json.dumps(data))
+    path.write_text(json.dumps(data), encoding="utf-8")
     with pytest.raises(ValueError, match="test"):
         ExperimentProfile.load(path).activate()
     with pytest.raises(ValueError, match="test"):
@@ -322,3 +322,24 @@ def test_pool_restores_visible_objects_after_removal():
         np.testing.assert_array_equal(expected, env.unwrapped.simulator.model.geom_rgba)
     finally:
         env.close()
+
+
+def test_text_files_are_read_and_written_as_utf8():
+    """Senza encoding esplicito Windows usa cp1252: '\u2192' non si scrive e i file UTF-8 si leggono storpiati."""
+    mancanti = []
+    for folder in ("physical_ai_mujoco", "scripts", "tools", "tests"):
+        for path in (ROOT / folder).rglob("*.py"):
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                if not isinstance(node, ast.Call):
+                    continue
+                if isinstance(node.func, ast.Attribute) and node.func.attr in ("read_text", "write_text"):
+                    testo = True
+                elif isinstance(node.func, ast.Name) and node.func.id == "open":
+                    modi = [a.value for a in node.args[1:2] if isinstance(a, ast.Constant)]
+                    modi += [k.value.value for k in node.keywords if k.arg == "mode" and isinstance(k.value, ast.Constant)]
+                    testo = not any("b" in str(modo) for modo in modi)
+                else:
+                    continue
+                if testo and not any(k.arg == "encoding" for k in node.keywords):
+                    mancanti.append(f"{path.relative_to(ROOT)}:{node.lineno}")
+    assert not mancanti, "Manca encoding=\"utf-8\" in: " + ", ".join(mancanti)

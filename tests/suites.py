@@ -33,6 +33,9 @@ SUITES = {
         "test_architecture.py",
         "test_test_runner.py",
     ),
+    "archivio": (
+        "test_archivio_drive.py",
+    ),
 }
 
 

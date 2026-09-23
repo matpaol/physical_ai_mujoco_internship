@@ -146,7 +146,7 @@ def observable_threshold(config: dict, detector_weights: str | Path | None) -> t
     if detector_weights is not None:
         card = Path(detector_weights).with_suffix(".json")
         if card.is_file():
-            measured = json.loads(card.read_text()).get("observability", {}).get(
+            measured = json.loads(card.read_text(encoding="utf-8")).get("observability", {}).get(
                 "minimum_recognizable_visible_fraction"
             )
             if measured is not None:
@@ -857,7 +857,7 @@ def export_graphs(report: dict, directory: Path) -> list[Path]:
             dot_path.write_text(
                 "digraph osservazione_invalida {\n"
                 f"  invalid [shape=note, label={quote('Observation non valida\n' + reason)}];\n"
-                "}\n"
+                "}\n", encoding="utf-8"
             )
             files.append(dot_path)
             record["graph_dot"] = str(dot_path)
@@ -926,7 +926,7 @@ def export_graphs(report: dict, directory: Path) -> list[Path]:
         lines.append("}")
         stem = f"scene_{record['scene_index']:03d}_{record['mode']}"
         dot_path = directory / f"{stem}.dot"
-        dot_path.write_text("\n".join(line for line in lines if line) + "\n")
+        dot_path.write_text("\n".join(line for line in lines if line) + "\n", encoding="utf-8")
         files.append(dot_path)
         record["graph_dot"] = str(dot_path)
         if dot_binary:
@@ -962,7 +962,7 @@ def _interactive_profiles(directory: Path = CONFIG_DIR) -> list[tuple[Path, dict
     profiles = []
     for path in sorted(directory.glob("*.json")):
         try:
-            payload = json.loads(path.read_text())
+            payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
         if not isinstance(payload, dict):
@@ -1232,7 +1232,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-target-immersion", type=float)
     args = parser.parse_args(argv)
     if args.review_report is not None:
-        report = json.loads(args.review_report.read_text())
+        report = json.loads(args.review_report.read_text(encoding="utf-8"))
         review_scene(
             report, args.scene - 1, seconds=args.review_seconds,
             output_dir=args.review_report.parent / args.review_report.stem,
@@ -1244,10 +1244,10 @@ def main(argv: list[str] | None = None) -> int:
         path = args.config or CONFIG_DIR / "clean.json"
         modes = DEFAULT_MODES if args.mode == "all" else (args.mode,)
         interactive_stereo_profile = None
-    config = json.loads(path.read_text())
+    config = json.loads(path.read_text(encoding="utf-8"))
     stereo_profile = args.stereo_profile or interactive_stereo_profile
     if stereo_profile is not None:
-        config["stereo"] = json.loads((CONFIG_DIR / f"{stereo_profile}.json").read_text())["stereo"]
+        config["stereo"] = json.loads((CONFIG_DIR / f"{stereo_profile}.json").read_text(encoding="utf-8"))["stereo"]
         config["stereo_profile"] = stereo_profile
     if args.scenes is not None:
         config["scene_count"] = args.scenes
@@ -1315,9 +1315,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     destination.parent.mkdir(parents=True, exist_ok=True)
     # Il report resta disponibile anche se l'esportatore dei grafi fallisce.
-    destination.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
+    destination.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     graph_files = export_graphs(report, destination.parent / destination.stem)
-    destination.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
+    destination.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print("\nRisultati OSSERVA (media sulle scene; '-' = non misurabile)")
     threshold = report["target_observable_threshold"]
     print(

@@ -1,0 +1,94 @@
+{
+  "cartella_drive": "physical_ai_mujoco_tesi",
+  "descrizione": "Archivio dei risultati pesanti del progetto Physical AI con MuJoCo: tutto cio' che serve alla tesi ma non entra in git. Gestito dal modulo tools/archivio_drive/ del repository (guida: tools/archivio_drive/README.md).",
+  "escludi": ["__pycache__", ".DS_Store", "._*", "Thumbs.db", "desktop.ini", "*.pyc", "*.parziale"],
+  "moduli": {
+    "01_scena": "SCENE: scene generate e magazzini di scene pre-assestate.",
+    "02_simulazione": "SIMULATION: verifiche della fisica e registrazioni degli episodi.",
+    "03_osserva": "OBSERVE e sensori: benchmark della percezione, calibrazioni, catture grezze.",
+    "04_visore": "VISION_TRAINING: dataset, training, pesi e valutazioni del detector.",
+    "05_decidi": "DECIDE ed EXPERIMENTS: policy PPO e confronti con le baseline.",
+    "06_esegui": "EXECUTE: manipolatore UR5 simulato e reale (dalla fase 2).",
+    "07_dati_reali": "Dati acquisiti dal mondo reale: foto per il fine-tuning, acquisizioni di sensori e robot.",
+    "90_tesi": "Materiale finale per il documento di tesi, selezionato dai run."
+  },
+  "categorie": {
+    "scena/magazzini_scene": {
+      "cartella": "01_scena/magazzini_scene",
+      "descrizione": "Scene pre-assestate usate dal training PPO (magazzino di scene).",
+      "comprimi": true
+    },
+    "simulazione/verifiche_fisica": {
+      "cartella": "02_simulazione/verifiche_fisica",
+      "descrizione": "Esiti di scripts/verifica_fisica.py e evaluation/physics_checks.py."
+    },
+    "simulazione/video": {
+      "cartella": "02_simulazione/video",
+      "descrizione": "Registrazioni di episodi (record_phase_0b, rollout, viewer)."
+    },
+    "osserva/benchmark": {
+      "cartella": "03_osserva/benchmark",
+      "descrizione": "Report di evaluation/observe_benchmark.py e scripts/verifica_osserva.py."
+    },
+    "osserva/calibrazione": {
+      "cartella": "03_osserva/calibrazione",
+      "descrizione": "Stime ed errori di calibrazione dei sensori (stereo, RGB-D, LiDAR)."
+    },
+    "osserva/catture": {
+      "cartella": "03_osserva/catture",
+      "descrizione": "Frame stereo e nuvole LiDAR grezzi.",
+      "comprimi": true
+    },
+    "visore/dataset": {
+      "cartella": "04_visore/dataset",
+      "descrizione": "Dataset generati da vision_training/dataset.py (datasets/generated/...), archiviati come .zip.",
+      "comprimi": true
+    },
+    "visore/training": {
+      "cartella": "04_visore/training",
+      "descrizione": "Cartelle di training Ultralytics (outputs/detector_training/...): grafici, results.csv, best.pt e last.pt."
+    },
+    "visore/pesi": {
+      "cartella": "04_visore/pesi",
+      "descrizione": "Archivio di tutti i pesi del detector con la loro scheda, anche intermedi o scartati. I pesi consegnati stanno anche in git (outputs/detector_weights/)."
+    },
+    "visore/valutazioni": {
+      "cartella": "04_visore/valutazioni",
+      "descrizione": "Valutazioni per fascia di sagoma visibile (vision_training/evaluation.py)."
+    },
+    "decidi/training": {
+      "cartella": "05_decidi/training",
+      "descrizione": "Modelli PPO, log di training e monitor (experiments/train_teacher.py)."
+    },
+    "decidi/valutazioni": {
+      "cartella": "05_decidi/valutazioni",
+      "descrizione": "Confronti con le baseline, esaustivo, quanto_margine."
+    },
+    "esegui/ur5": {
+      "cartella": "06_esegui/ur5",
+      "descrizione": "Risultati dell'esecuzione con UR5 simulato o reale (fase 2 in poi)."
+    },
+    "reale/foto": {
+      "cartella": "07_dati_reali/foto",
+      "descrizione": "Foto reali, grezze o etichettate, per il fine-tuning del visore.",
+      "comprimi": true
+    },
+    "reale/acquisizioni": {
+      "cartella": "07_dati_reali/acquisizioni",
+      "descrizione": "Registrazioni di sensori e robot reali.",
+      "comprimi": true
+    },
+    "tesi/figure": {
+      "cartella": "90_tesi/figure",
+      "descrizione": "Figure pronte per il documento di tesi."
+    },
+    "tesi/tabelle": {
+      "cartella": "90_tesi/tabelle",
+      "descrizione": "Tabelle e numeri pronti per il documento di tesi."
+    },
+    "tesi/video_demo": {
+      "cartella": "90_tesi/video_demo",
+      "descrizione": "Video dimostrativi selezionati."
+    }
+  }
+}

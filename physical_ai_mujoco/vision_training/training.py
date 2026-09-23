@@ -53,7 +53,7 @@ def _base_model(recipe: TrainingRecipe) -> tuple[str, dict | None]:
         candidate = PROJECT_ROOT / candidate
     if candidate.suffix == ".pt" and candidate.is_file():
         card = candidate.with_suffix(".json")
-        parent = json.loads(card.read_text()) if card.is_file() else None
+        parent = json.loads(card.read_text(encoding="utf-8")) if card.is_file() else None
         return str(candidate), parent
     if "/" in recipe.base_model or "\\" in recipe.base_model:
         raise FileNotFoundError(f"Modello di partenza non trovato: {candidate}")
@@ -65,11 +65,11 @@ def _git_commit() -> str | None:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=PROJECT_ROOT,
-            capture_output=True, text=True, timeout=5, check=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, check=True,
         )
         dirty = subprocess.run(
             ["git", "status", "--porcelain", "--untracked-files=no"], cwd=PROJECT_ROOT,
-            capture_output=True, text=True, timeout=5, check=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5, check=True,
         ).stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return None
@@ -160,14 +160,14 @@ def train(recipe: TrainingRecipe, *, yolo_factory=None, run_evaluation: bool = T
             "weights": parent_card.get("weights"),
             "dataset": parent_card.get("resolved", {}).get("dataset"),
         },
-        "dataset_summary": json.loads(summary_path.read_text()) if summary_path.is_file() else None,
+        "dataset_summary": json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.is_file() else None,
         "environment": {**_versions(), "git_commit": _git_commit()},
         "metrics": {
             str(key): float(value) for key, value in metrics.items()
             if isinstance(value, (int, float)) or hasattr(value, "item")
         },
     }
-    card_path.write_text(json.dumps(card, indent=2) + "\n")
+    card_path.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
 
     split = recipe.evaluation.split
     if run_evaluation and any((dataset / "annotations" / split).glob("*.json")):

@@ -1,0 +1,15 @@
+{
+  "kind": "training",
+  "name": "sim_dr_v1_rtx3050",
+  "description": "Pre-training su sim_dr_v1 per RTX 3050 Laptop (4 GB VRAM): batch ridotto rispetto alla ricetta GPU standard.",
+  "dataset": "datasets/generated/sim_dr_v1",
+  "base_model": "yolo11s-seg.pt",
+  "epochs": 200,
+  "image_size": 640,
+  "batch": 8,
+  "patience": 40,
+  "seed": 0,
+  "device": "auto",
+  "ultralytics": {"hsv_h": 0.0, "hsv_s": 0.0, "hsv_v": 0.3, "fliplr": 0.5, "workers": 4},
+  "evaluation": {"split": "test", "iou_threshold": 0.5, "confidence": 0.25, "band_width": 0.1, "required_recall": 0.8, "min_samples_per_band": 10}
+}

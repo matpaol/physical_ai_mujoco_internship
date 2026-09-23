@@ -170,12 +170,12 @@ def test_exposure_curve_separates_fully_hidden_target():
 def test_interactive_profiles_ignore_scene_rule_files(tmp_path):
     (tmp_path / "clean.json").write_text(
         '{"name":"Clean","scene_count":1,"object_count":3,"seed":42,'
-        '"degraded":{},"stereo":{}}'
+        '"degraded":{},"stereo":{}}', encoding="utf-8"
     )
     (tmp_path / "immersed_scene_rules.json").write_text(
-        '{"schema_version":2,"ground_selection":{"type_id":"flat_standard"}}'
+        '{"schema_version":2,"ground_selection":{"type_id":"flat_standard"}}', encoding="utf-8"
     )
-    (tmp_path / "broken.json").write_text("{not-json")
+    (tmp_path / "broken.json").write_text("{not-json", encoding="utf-8")
 
     profiles = _interactive_profiles(tmp_path)
 

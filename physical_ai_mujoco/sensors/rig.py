@@ -91,6 +91,6 @@ class StereoRig:
 
     @classmethod
     def from_calibration_file(cls, path: str | Path):
-        data = json.loads(Path(path).read_text())
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
         return cls(np.asarray(data["intrinsics"]), np.asarray(data["world_from_left"]),
                    float(data["baseline"]), int(data["height"]), int(data["width"]))

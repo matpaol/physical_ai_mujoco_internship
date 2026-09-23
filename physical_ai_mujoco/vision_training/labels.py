@@ -115,7 +115,7 @@ def write_sample(
             }
         )
 
-    label_path.write_text("\n".join(labels) + ("\n" if labels else ""))
+    label_path.write_text("\n".join(labels) + ("\n" if labels else ""), encoding="utf-8")
     annotation = {
         "sample_id": sample_id,
         "split": split,
@@ -125,7 +125,7 @@ def write_sample(
         "instances": instances,
         **(extra or {}),
     }
-    annotation_path.write_text(json.dumps(annotation, indent=2) + "\n")
+    annotation_path.write_text(json.dumps(annotation, indent=2) + "\n", encoding="utf-8")
     return annotation
 
 
@@ -142,5 +142,5 @@ def write_data_yaml(path: Path, dataset_root: Path, class_names: tuple[str, ...]
     lines.append("names:")
     lines.extend(f"  {index}: {name}" for index, name in enumerate(class_names))
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines) + "\n")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path

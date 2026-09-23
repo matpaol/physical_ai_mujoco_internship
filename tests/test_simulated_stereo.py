@@ -139,8 +139,8 @@ def test_benchmark_compares_all_sources_without_decide_or_execute(tmp_path):
     assert "segmentation oracle" in report["stereo_identity_source"]
     files = export_graphs(report, tmp_path)
     assert any(path.suffix == ".dot" for path in files)
-    exact_graph = (tmp_path / "scene_000_exact.dot").read_text()
-    stereo_graph = (tmp_path / "scene_000_stereo.dot").read_text()
+    exact_graph = (tmp_path / "scene_000_exact.dot").read_text(encoding="utf-8")
+    stereo_graph = (tmp_path / "scene_000_stereo.dot").read_text(encoding="utf-8")
     assert "Contatti MuJoCo" in exact_graph
     assert "Relazioni non disponibili" in stereo_graph
 
@@ -204,7 +204,7 @@ def test_benchmark_records_invariant_failure_and_continues(monkeypatch, tmp_path
     assert report["summary"]["exact"]["metrics"]["object_recall"]["scene_count"] == 1
     files = export_graphs(report, tmp_path)
     assert len([path for path in files if path.suffix == ".dot"]) == 2
-    assert "Observation non valida" in (tmp_path / "scene_000_exact.dot").read_text()
+    assert "Observation non valida" in (tmp_path / "scene_000_exact.dot").read_text(encoding="utf-8")
 
 
 def test_benchmark_does_not_reclassify_other_errors_as_invariants(monkeypatch):
@@ -237,13 +237,13 @@ def test_cli_saves_invalid_report_and_returns_nonzero(monkeypatch, tmp_path):
         "scene_count": 1, "object_count": 2, "seed": 5,
         "degraded": {"position_sigma": 0.0, "drop_probability": 0.0},
         "stereo": {"centroid_noise_px": 0.0, "drop_probability": 0.0},
-    }))
+    }), encoding="utf-8")
     output_path = tmp_path / "report.json"
     assert main([
         "--config", str(config_path), "--mode", "exact", "--headless",
         "--output", str(output_path),
     ]) == 1
-    saved = json.loads(output_path.read_text())
+    saved = json.loads(output_path.read_text(encoding="utf-8"))
     assert saved["scenes"][0]["metrics"]["invariant_violations"] == ["Frame non allineati"]
     assert saved["summary"]["exact"]["invariant_violations"] == 1
 

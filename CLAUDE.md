@@ -44,3 +44,15 @@ si firma mai come se fosse l'autore umano.
 | `README_oa.md` | come si usa il codice, e perché funziona così |
 | `MODIFICHE.md` | cosa è cambiato, quando, per mano di chi e per quale motivo |
 | `configs/phase_0b/` | i parametri di Fase 0B: task, scena, simulazione, dataset |
+| `docs/SINCRONIZZAZIONE.md` | lavorare su più PC: cosa va in git, cosa su Drive, comandi git |
+| `tools/archivio_drive/README.md` | archivio Drive dei risultati pesanti: struttura, comandi, regole |
+
+## 5. Risultati pesanti e più PC
+
+In git vanno codice, configurazioni e **solo i pesi consegnati**
+(`outputs/detector_weights/`). Dataset generati, cartelle di training, video,
+benchmark e dati reali vanno nell'archivio Drive con
+`python -m tools.archivio_drive carica ... --nota "..."`: la nota è
+obbligatoria e segue le regole del «Perché» di `MODIFICHE.md`. Non modificare a
+mano i file dell'archivio. Le operazioni git che scrivono (commit, push, merge)
+le decide la persona: un'IA prepara i file e propone i comandi.

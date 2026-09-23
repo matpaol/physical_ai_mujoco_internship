@@ -69,12 +69,12 @@ def main(argv=None) -> int:
     parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[2] /
                         "outputs/observe_tests/calibration_curve.json")
     args = parser.parse_args(argv)
-    config = json.loads(args.config.read_text())
+    config = json.loads(args.config.read_text(encoding="utf-8"))
     config["scene_count"] = args.scenes
     config["object_count"] = args.objects
     result = calibration_curve(config, tuple(args.translation), tuple(args.rotation))
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
+    args.output.write_text(json.dumps(result, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     for record in result["records"]:
         print(record)
     print(f"Report: {args.output}")

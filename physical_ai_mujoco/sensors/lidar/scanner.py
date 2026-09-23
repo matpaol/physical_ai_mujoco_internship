@@ -34,7 +34,7 @@ class LidarConfig:
 
     @classmethod
     def from_file(cls, path: str | Path) -> "LidarConfig":
-        data = json.loads(Path(path).read_text())
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
         scan = data.get("simulation_sampling", data)
         mounting = data.get("mounting", {})
         return cls(

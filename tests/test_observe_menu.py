@@ -114,7 +114,7 @@ def test_cli_logs_unexpected_error_without_printing_traceback(monkeypatch, capsy
     assert "Traceback" not in output
     logs = list(tmp_path.glob("osserva_error_*.log"))
     assert len(logs) == 1
-    assert "Traceback" in logs[0].read_text()
+    assert "Traceback" in logs[0].read_text(encoding="utf-8")
 
 
 def test_cli_handles_keyboard_interrupt(monkeypatch, capsys):

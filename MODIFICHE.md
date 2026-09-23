@@ -58,6 +58,154 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-23 13:19:14 — Testo sempre in UTF-8: il benchmark OSSERVA falliva su Windows
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** `encoding="utf-8"` aggiunto a tutte le 73 chiamate `read_text()` /
+`write_text()` che non lo avevano, in 23 file (`physical_ai_mujoco/`,
+`scripts/`, `tools/`, `tests/`), e alle chiamate `subprocess.run(..., text=True)`
+che leggono l'output di git (`experiments/metadata.py`,
+`vision_training/training.py`, `tools/archivio_drive`). Nuovo test
+`test_text_files_are_read_and_written_as_utf8` in `tests/test_architecture.py`:
+fallisce se una `read_text`/`write_text` o un `open()` in modo testo non indica
+l'encoding. Le modifiche sono state fatte da uno script che inserisce solo
+l'argomento, usando le posizioni dell'AST, e ricontrolla che ogni file resti
+Python valido.
+
+**Perche':** prima suite completa sul ROG (Windows 11, Python 3.12.6): 168
+passati, 2 falliti, entrambi in `tests/test_simulated_stereo.py`
+(`test_benchmark_compares_all_sources_without_decide_or_execute`,
+`test_benchmark_records_invariant_failure_and_continues`) con
+`UnicodeEncodeError: 'charmap' codec can't encode character '\u2192'` in
+`observe_benchmark.export_graphs`. Senza `encoding` Python usa la codifica
+del sistema: UTF-8 su Mac e Linux, cp1252 su Windows, che non ha la freccia
+dei grafi `.dot`. Lo stesso difetto era in altre 71 chiamate: su Windows i
+file UTF-8 scritti dal Mac (es. `"1B · Policy"` nei profili di
+`configs/experiments/`) vengono letti storpiati senza errore, e il codice
+scritto sul Mac lo reintrodurrebbe senza accorgersene: da qui il test.
+
+**File:** `physical_ai_mujoco/evaluation/{observe_benchmark,sensor_calibration,sensor_validation}.py`,
+`physical_ai_mujoco/experiments/metadata.py`, `physical_ai_mujoco/infrastructure/{builder,experiment}.py`,
+`physical_ai_mujoco/observe/main_test_osserva.py`, `physical_ai_mujoco/sensors/{rig,lidar/scanner}.py`,
+`physical_ai_mujoco/vision_training/{dataset,evaluation,labels,recipe,training}.py`,
+`scripts/verifica_osserva.py`, `tools/capture_baseline.py`, `tools/archivio_drive/archivio_drive.py`,
+`tests/test_{architecture,learned_detector,observe_menu,phase_0b,sensors_extended,simulated_stereo,vision_training}.py`.
+
+**Verifica:** nella VM Cowork del ROG (Linux, Python 3.12.14) con
+`-X warn_default_encoding` ed `EncodingWarning` trasformato in errore per i
+moduli del progetto: `test_architecture` 14/14 (compreso il nuovo),
+`test_archivio_drive` 12/12, `test_test_runner` 3/3, `test_learned_detector`
+8/8, `test_observe_menu` 18/18, `test_mesh_target` 6/6, `test_phase_0a` 6/6,
+`test_sensor_validation` 1/1, `test_vision_training` 13 passati prima dei test
+che fanno rendering. I test con rendering MuJoCo non girano nella VM (nessun
+display OpenGL). Poi, sul ROG (Windows 11, Python 3.12.6):
+`python main_test.py --suite tutti` → **171 passati, 0 falliti** in 198,8 s
+(prima della correzione: 168 passati, 2 falliti).
+
+## 2026-09-23 12:56:08 — Archivio Drive: esclusi i file `._*` del Mac, niente run a meta'
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** `configs/archivio_drive.json`: `._*` aggiunto a `escludi`.
+`tools/archivio_drive`: se `carica` viene interrotto (Ctrl+C) o fallisce
+durante copia o zip, la cartella del run appena creata viene rimossa e nulla
+entra nel registro; avanzamento stampato ogni 2.000 impronte e ogni 500 copie.
+`VERSIONE_STRUMENTO` passa a 2. `.gitignore`: aggiunto `._*`.
+
+**Perche':** il primo caricamento del dataset `sim_dr_v1` sul ROG ha contato
+53.056 file invece di circa la meta': ogni file ha un gemello AppleDouble
+`._nome` da 4 KB (verificato: `images/train` 2.432 immagini e 2.432 `._`,
+`labels/train` idem), creato dal Mac quando il dataset e' stato copiato su un
+filesystem non Apple. Sono metadati senza contenuto: sarebbero finiti nello zip
+su Drive. L'unico modo di fermare il caricamento era Ctrl+C, che nella
+versione 1 poteva lasciare su Drive una cartella di run incompleta e non
+registrata, da cancellare a mano.
+
+**File:** `configs/archivio_drive.json`, `tools/archivio_drive/archivio_drive.py`,
+`tests/test_archivio_drive.py`, `.gitignore`.
+
+**Verifica:** `pytest tests/test_archivio_drive.py`: 12 passati, fra cui uno
+nuovo che simula Ctrl+C durante la copia (registro vuoto, nessuna cartella
+rimasta) e il file `._results.csv` escluso nel test di copia.
+
+## 2026-09-23 12:47:53 — Archivio Drive per i risultati pesanti: modulo `tools/archivio_drive/`
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Nuovo modulo `tools/archivio_drive/` (codice, `__main__.py`,
+`README.md`), avviabile con `python -m tools.archivio_drive`. Archivia file e
+cartelle nella cartella `physical_ai_mujoco_tesi/` di Google Drive, montata
+dall'app desktop (trovata da sola su Windows, Mac e Colab; altrimenti
+`--drive`/`ARCHIVIO_DRIVE`). Comandi: `carica`, `scarica`, `stato
+[--verifica]`, `annota`, `categorie`, `prepara`, `readme`. Ogni caricamento e'
+un run `AAAA-MM-GG_nome` con `scheda.json` (commit, branch, PC, autore, fase,
+SHA-256 di ogni file, nota obbligatoria); `registro.jsonl` append-only; il
+`README.md` dell'archivio e' rigenerato dal registro. Contenuto identico non
+viene ricaricato, contenuto cambiato diventa `nuova_versione` senza
+sovrascrivere; le categorie con migliaia di file vengono zippate. Struttura
+per modulo del progetto (01_scena ... 07_dati_reali, 90_tesi) definita in
+`configs/archivio_drive.json`. Nuova suite di test `archivio` in
+`tests/suites.py`. Nuova guida `docs/SINCRONIZZAZIONE.md` (git su piu' PC,
+cosa va dove); aggiornati `CLAUDE.md` (sezione 5 e tabella) e `README_oa.md`.
+
+**Perche':** il training del visore del 22/09 e' stato fatto sul ROG
+(RTX 3050) perche' sul Mac M3 era troppo lento; i risultati (cartella di
+training 67 MB con grafici e best/last.pt, dataset `sim_dr_v1` di 3.392
+immagini) non entrano in git e non c'era un modo tracciato di portarli sugli
+altri PC ne' di sapere, fra qualche mese, da quale commit e ricetta venivano.
+Matteo ha chiesto un sistema su Drive catalogato per modulo, con un registro
+di aggiunte e modifiche. La struttura segue i moduli e non le fasi per la
+stessa regola del codice (la fase vive nella configurazione): la fase e' un
+campo della scheda. Solo libreria standard perche' deve girare anche fuori
+dall'ambiente del progetto (Colab, PC appena clonato). I dataset vanno zippati
+perche' Drive sincronizza lentamente migliaia di file piccoli.
+
+**File:** `tools/archivio_drive/archivio_drive.py`, `tools/archivio_drive/__init__.py`,
+`tools/archivio_drive/__main__.py`, `tools/archivio_drive/README.md`,
+`configs/archivio_drive.json`, `tests/test_archivio_drive.py`, `tests/suites.py`,
+`docs/SINCRONIZZAZIONE.md`, `CLAUDE.md`, `README_oa.md` (modificati: `tests/suites.py`,
+`CLAUDE.md`, `README_oa.md`; gli altri sono nuovi).
+
+**Verifica:** `pytest tests/test_archivio_drive.py tests/test_test_runner.py`:
+14 passati (11 dell'archivio: copia, zip, doppioni, nuova versione, scarica
+senza sovrascrivere, annota, verifica di file alterati, errori d'uso), sia
+nell'ambiente Linux della sessione sia nella VM Cowork del ROG. **Non** e'
+stata eseguita la suite completa: in quegli ambienti MuJoCo non e' installato.
+Da lanciare sul ROG: `python main_test.py --suite tutti`.
+
+## 2026-09-23 12:47:53 — Pesi del visore in git; fine-tuning reale sui pesi del ROG
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** `.gitignore`: `outputs/` diventa `outputs/*` con l'eccezione
+`!outputs/detector_weights/`, quindi i pesi consegnati del visore (e la loro
+scheda) entrano in git; esclusi i modelli base di Ultralytics (`/yolo*.pt`,
+`/weights/`). `training_real_finetune_v1.json`: `base_model` passa da
+`outputs/detector_weights/sim_dr_v1_m3.pt` a `sim_dr_v1_rtx3050.pt`.
+Documentata la ricetta `configs/vision_training/sim_dr_v1_rtx3050.json`
+(creata sul ROG il 22/09 senza voce in questo registro) in
+`docs/ADDESTRAMENTO_VISORE.md` e `physical_ai_mujoco/vision_training/README.md`,
+dove anche gli esempi di valutazione e benchmark ora usano `sim_dr_v1_rtx3050.pt`.
+
+**Perche':** il modello del visore e' stato addestrato sul ROG (RTX 3050,
+batch 8 per i 4 GB di VRAM; 190 epoche in circa 7 ore; mAP50 maschere 0,84,
+recall 0,78) e serve su tutti i PC, ma `outputs/` era interamente ignorato:
+l'unico modo di portarlo sul Mac era a mano. I pesi sono 20 MB, sotto il
+limite di GitHub; le cartelle di training e le versioni intermedie restano
+fuori da git e vanno nell'archivio Drive. La ricetta di fine-tuning puntava a
+`sim_dr_v1_m3.pt`, un modello mai prodotto: il fine-tuning sulle foto reali
+sarebbe fallito all'avvio.
+
+**File:** `.gitignore`, `configs/vision_training/training_real_finetune_v1.json`,
+`configs/vision_training/sim_dr_v1_rtx3050.json` (gia' presente, ora da committare),
+`docs/ADDESTRAMENTO_VISORE.md`, `physical_ai_mujoco/vision_training/README.md`.
+
+**Verifica:** `git check-ignore -v`: `outputs/detector_weights/sim_dr_v1_rtx3050.pt`
+non e' ignorato, `outputs/detector_training/.../results.csv`, `yolo11s-seg.pt`
+e `weights/yolo26n.pt` si'. JSON della ricetta riletto correttamente. Il
+fine-tuning non e' stato lanciato (manca ancora il dataset reale).
+
 ## 2026-09-22 08:45:20 — Documentato come cambiare scenario e oggetti nel README del visore
 
 **Chi:** Claude (claude-sonnet-5, Anthropic), su richiesta di Matteo Paolini.

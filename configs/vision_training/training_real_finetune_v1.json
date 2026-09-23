@@ -3,7 +3,7 @@
   "name": "real_finetune_v1",
   "description": "MODELLO PER IL SIM2REAL, da usare quando esistera' il dataset reale etichettato: parte dai pesi pre-addestrati in simulazione, congela i primi 10 blocchi e usa un learning rate basso per non dimenticare quanto appreso in sim.",
   "dataset": "datasets/real/pfm1_real_v1",
-  "base_model": "outputs/detector_weights/sim_dr_v1_m3.pt",
+  "base_model": "outputs/detector_weights/sim_dr_v1_rtx3050.pt",
   "epochs": 60,
   "image_size": 640,
   "batch": 8,

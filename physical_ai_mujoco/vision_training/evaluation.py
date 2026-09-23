@@ -33,14 +33,14 @@ def dataset_class_names(dataset_dir: Path) -> tuple[str, ...]:
     """Classi del dataset: dal riassunto se c'e', altrimenti da data.yaml."""
     summary = dataset_dir / "summary.json"
     if summary.is_file():
-        names = json.loads(summary.read_text()).get("class_names")
+        names = json.loads(summary.read_text(encoding="utf-8")).get("class_names")
         if names:
             return tuple(names)
     data_yaml = dataset_dir / "data.yaml"
     if data_yaml.is_file():
         names = {}
         inside = False
-        for line in data_yaml.read_text().splitlines():
+        for line in data_yaml.read_text(encoding="utf-8").splitlines():
             if line.strip() == "names:":
                 inside = True
                 continue
@@ -59,7 +59,7 @@ def load_annotations(dataset_dir: Path, split: str) -> list[dict]:
     paths = sorted(folder.glob("*.json"))
     if not paths:
         raise FileNotFoundError(f"Nessuna annotazione nello split '{split}' di {dataset_dir}")
-    return [json.loads(path.read_text()) for path in paths]
+    return [json.loads(path.read_text(encoding="utf-8")) for path in paths]
 
 
 def _visible_fraction(annotation: dict) -> float | None:
@@ -223,7 +223,7 @@ def evaluate(
         EVALUATIONS_DIR / f"{weights.stem}__{dataset_dir.name}__{settings.split}.json"
     )
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(json.dumps({**report, "samples": samples}, indent=2) + "\n")
+    destination.write_text(json.dumps({**report, "samples": samples}, indent=2) + "\n", encoding="utf-8")
     report["report_path"] = str(destination)
     if update_card:
         _update_card(weights, dataset_dir, settings, report)
@@ -234,7 +234,7 @@ def _update_card(weights: Path, dataset_dir: Path, settings: EvaluationSettings,
     card_path = weights.with_suffix(".json")
     if not card_path.is_file():
         return
-    card = json.loads(card_path.read_text())
+    card = json.loads(card_path.read_text(encoding="utf-8"))
     card.setdefault("evaluations", {})[f"{dataset_dir.name}:{settings.split}"] = report
     has_visibility = any(item["lower"] is not None for item in report["bands"])
     if settings.split == "test" and has_visibility:
@@ -245,7 +245,7 @@ def _update_card(weights: Path, dataset_dir: Path, settings: EvaluationSettings,
             "dataset": dataset_dir.name,
             "split": settings.split,
         }
-    card_path.write_text(json.dumps(card, indent=2) + "\n")
+    card_path.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
 
 
 def format_report(report: dict) -> str:

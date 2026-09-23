@@ -60,7 +60,7 @@ SMOKE = RECIPE_DIR / "dataset_smoke.json"
 
 
 def _smoke_data() -> dict:
-    return json.loads(SMOKE.read_text())
+    return json.loads(SMOKE.read_text(encoding="utf-8"))
 
 
 # ------------------------------------------------------------------ ricette
@@ -87,7 +87,7 @@ def test_recipe_rejects_typos_instead_of_using_defaults():
     data["splits"] = {"validation": 0.5, "test": 0.5}
     with pytest.raises(RecipeError, match="training"):
         dataset_recipe_from_dict(data)
-    training = json.loads((RECIPE_DIR / "training_smoke.json").read_text())
+    training = json.loads((RECIPE_DIR / "training_smoke.json").read_text(encoding="utf-8"))
     training["ultralytics"]["epochs"] = 3
     with pytest.raises(RecipeError, match="epochs"):
         training_recipe_from_dict(training)
@@ -155,13 +155,13 @@ def test_labels_are_normalized_and_annotation_keeps_extra_fields(tmp_path):
         ("obstacle", "pfm_1_target"), 3, extra={"target_visible_fraction": 0.4},
     )
     assert [item["class_id"] for item in annotation["instances"]] == ["pfm_1_target"]
-    stored = json.loads((destination / "annotations/test/sample.json").read_text())
+    stored = json.loads((destination / "annotations/test/sample.json").read_text(encoding="utf-8"))
     assert stored["target_visible_fraction"] == 0.4
-    assert (destination / "labels/test/sample.txt").read_text().startswith("1 ")
+    assert (destination / "labels/test/sample.txt").read_text(encoding="utf-8").startswith("1 ")
     with pytest.raises(FileExistsError, match="non e' vuota"):
         prepare_directory(destination)
     yaml = write_data_yaml(tmp_path / "run/data.yaml", destination, ("obstacle", "pfm_1_target"))
-    text = yaml.read_text()
+    text = yaml.read_text(encoding="utf-8")
     assert f"path: {destination.resolve()}" in text and "test: images/test" in text
     assert "train:" not in text  # niente split vuoti
 
@@ -196,7 +196,7 @@ def test_minimum_fraction_stops_at_first_band_below_required_recall():
 def _tiny_eval_dataset(root: Path) -> Path:
     """Tre campioni: target ben visibile, target poco visibile, nessun target."""
     prepare_directory(root)
-    (root / "summary.json").write_text(json.dumps({"class_names": ["obstacle", "pfm_1_target"]}))
+    (root / "summary.json").write_text(json.dumps({"class_names": ["obstacle", "pfm_1_target"]}), encoding="utf-8")
     target = np.zeros((20, 30), dtype=bool)
     target[5:12, 3:10] = True
     for sample_id, fraction, present in (("big", 0.85, True), ("small", 0.15, True), ("none", None, False)):
@@ -229,7 +229,7 @@ def test_evaluation_reports_recall_per_band_and_updates_card(tmp_path, monkeypat
     dataset = _tiny_eval_dataset(tmp_path / "ds")
     weights = tmp_path / "model.pt"
     weights.write_bytes(b"x")
-    weights.with_suffix(".json").write_text(json.dumps({"name": "model"}))
+    weights.with_suffix(".json").write_text(json.dumps({"name": "model"}), encoding="utf-8")
     target = np.zeros((20, 30), dtype=bool)
     target[5:12, 3:10] = True
     settings = replace(evaluate_module.EvaluationSettings(), min_samples_per_band=1)
@@ -239,7 +239,7 @@ def test_evaluation_reports_recall_per_band_and_updates_card(tmp_path, monkeypat
     assert bands["0.10-0.20"]["recall"] == 0.0
     assert report["false_positive_rate"] == 1.0
     assert report["minimum_recognizable_visible_fraction"] == pytest.approx(0.8)
-    card = json.loads(weights.with_suffix(".json").read_text())
+    card = json.loads(weights.with_suffix(".json").read_text(encoding="utf-8"))
     assert card["observability"]["minimum_recognizable_visible_fraction"] == pytest.approx(0.8)
     assert "ds:test" in card["evaluations"]
 
@@ -267,12 +267,12 @@ def test_training_writes_card_records_parent_and_never_overwrites(tmp_path, monk
     dataset = _tiny_eval_dataset(tmp_path / "ds")
     for split in ("train", "val"):
         cv2.imwrite(str(dataset / "images" / split / "a.png"), np.zeros((4, 4), np.uint8))
-    data = json.loads((RECIPE_DIR / "training_smoke.json").read_text())
+    data = json.loads((RECIPE_DIR / "training_smoke.json").read_text(encoding="utf-8"))
     data.update(dataset=str(dataset), device="cpu")
     recipe = training_recipe_from_dict(data)
 
     card_path = train_module.train(recipe, yolo_factory=_FakeYolo, run_evaluation=False)
-    card = json.loads(card_path.read_text())
+    card = json.loads(card_path.read_text(encoding="utf-8"))
     assert card_path.with_suffix(".pt").read_bytes() == b"pesi"
     assert card["resolved"]["device"] == "cpu"
     assert card["training_recipe"]["name"] == "smoke"
@@ -283,14 +283,14 @@ def test_training_writes_card_records_parent_and_never_overwrites(tmp_path, monk
         train_module.train(recipe, yolo_factory=_FakeYolo, run_evaluation=False)
 
     child = training_recipe_from_dict(dict(data, name="figlio", base_model=str(card_path.with_suffix(".pt"))))
-    child_card = json.loads(train_module.train(child, yolo_factory=_FakeYolo, run_evaluation=False).read_text())
+    child_card = json.loads(train_module.train(child, yolo_factory=_FakeYolo, run_evaluation=False).read_text(encoding="utf-8"))
     assert child_card["parent"]["name"] == "smoke"
 
 
 def test_training_requires_validation_images(tmp_path):
     dataset = tmp_path / "ds"
     prepare_directory(dataset)
-    data = json.loads((RECIPE_DIR / "training_smoke.json").read_text())
+    data = json.loads((RECIPE_DIR / "training_smoke.json").read_text(encoding="utf-8"))
     data.update(dataset=str(dataset))
     with pytest.raises(ValueError, match="validazione"):
         train_module.train(training_recipe_from_dict(data), yolo_factory=_FakeYolo)
@@ -385,7 +385,7 @@ def test_generated_dataset_has_scene_level_splits_and_full_annotations(tmp_path)
     summary = generate_dataset(recipe, tmp_path / "ds", progress=None)
     root = tmp_path / "ds"
     assert set(summary["splits"]) == {"train", "val", "test"}
-    annotations = [json.loads(path.read_text()) for path in root.glob("annotations/*/*.json")]
+    annotations = [json.loads(path.read_text(encoding="utf-8")) for path in root.glob("annotations/*/*.json")]
     assert len(annotations) == summary["image_count"] >= 6
     for item in annotations:
         assert {"target_visible_fraction", "object_count", "conditions", "target_present"} <= set(item)
@@ -394,8 +394,8 @@ def test_generated_dataset_has_scene_level_splits_and_full_annotations(tmp_path)
     for item in annotations:
         scenes_by_split.setdefault(item["scene_index"], set()).add(item["split"])
     assert all(len(splits) == 1 for splits in scenes_by_split.values())
-    assert json.loads((root / "recipe.json").read_text())["name"] == "smoke"
-    assert "path: " in (root / "data.yaml").read_text()
+    assert json.loads((root / "recipe.json").read_text(encoding="utf-8"))["name"] == "smoke"
+    assert "path: " in (root / "data.yaml").read_text(encoding="utf-8")
 
 
 def test_randomization_does_not_change_which_views_lack_the_target(tmp_path):
@@ -408,7 +408,7 @@ def test_randomization_does_not_change_which_views_lack_the_target(tmp_path):
 
     def presence(root):
         return {
-            path.stem: json.loads(path.read_text())["target_present"]
+            path.stem: json.loads(path.read_text(encoding="utf-8"))["target_present"]
             for path in root.glob("annotations/*/*.json")
         }
 

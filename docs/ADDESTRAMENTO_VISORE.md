@@ -77,7 +77,14 @@ Contenuto della cartella:
 ```bash
 python -m scripts.train_detector configs/vision_training/training_sim_dr_v1_m3.json    # Mac M3
 python -m scripts.train_detector configs/vision_training/training_sim_dr_v1_gpu.json   # GPU NVIDIA
+python -m scripts.train_detector configs/vision_training/sim_dr_v1_rtx3050.json        # ROG, RTX 3050 4 GB
 ```
+
+`sim_dr_v1_rtx3050` e' la ricetta GPU con `batch: 8` per stare nei 4 GB di
+VRAM della RTX 3050 Laptop. **Il modello consegnato oggi e'
+`outputs/detector_weights/sim_dr_v1_rtx3050.pt`** (22/09/2026, 190 epoche,
+mAP50 maschere 0,84): e' in git; la cartella di training completa e' nell'archivio
+Drive (`04_visore/training/`, vedi [SINCRONIZZAZIONE.md](SINCRONIZZAZIONE.md)).
 
 | | Mac M3 | GPU NVIDIA |
 |---|---|---|
@@ -107,7 +114,7 @@ modello:
 
 ```bash
 python -m physical_ai_mujoco.vision_training.evaluation \
-    outputs/detector_weights/sim_dr_v1_m3.pt datasets/generated/sim_dr_v1 --split test
+    outputs/detector_weights/sim_dr_v1_rtx3050.pt datasets/generated/sim_dr_v1 --split test
 ```
 
 | Opzione | Default | Significato |
@@ -171,7 +178,7 @@ Il benchmark **non** prende da solo i modelli nuovi; va passato:
 ```bash
 python -m physical_ai_mujoco.evaluation.observe_benchmark \
     --config configs/observe_tests/random.json --mode fusion_learned \
-    --weights outputs/detector_weights/sim_dr_v1_m3.pt --scenes 20 --headless
+    --weights outputs/detector_weights/sim_dr_v1_rtx3050.pt --scenes 20 --headless
 ```
 
 La prima riga dei risultati dice quale soglia di "target osservabile" e' in uso
@@ -185,7 +192,7 @@ La prima riga dei risultati dice quale soglia di "target osservabile" e' in uso
 python -m scripts.train_detector configs/vision_training/training_real_finetune_v1.json
 ```
 
-Parte dai pesi `sim_dr_v1_m3.pt`, congela i primi 10 blocchi (`freeze: 10`),
+Parte dai pesi `sim_dr_v1_rtx3050.pt`, congela i primi 10 blocchi (`freeze: 10`),
 learning rate basso (`lr0: 0.001` con `optimizer: AdamW`: con `auto`
 Ultralytics ignorerebbe `lr0`). La scheda registra il modello padre.
 

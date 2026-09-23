@@ -22,7 +22,7 @@ class ExperimentProfile:
     @classmethod
     def load(cls, path):
         path = Path(path).resolve()
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         return cls(
             path,
             data["name"],

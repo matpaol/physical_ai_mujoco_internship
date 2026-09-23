@@ -90,7 +90,7 @@ python -m scripts.genera_dataset_target configs/vision_training/dataset_sim_dr_v
 python -m scripts.train_detector configs/vision_training/training_sim_dr_v1_m3.json
 # 3. valutazione di un modello qualsiasi su un dataset qualsiasi
 python -m physical_ai_mujoco.vision_training.evaluation \
-    outputs/detector_weights/sim_dr_v1_m3.pt datasets/generated/sim_dr_v1 --split test
+    outputs/detector_weights/sim_dr_v1_rtx3050.pt datasets/generated/sim_dr_v1 --split test
 ```
 
 Oppure dal menu: `python physical_ai_mujoco/observe/main_test_osserva.py`,
@@ -119,7 +119,8 @@ Ricette presenti:
 | `dataset_sim_nodr_v1` | Stesse scene di `sim_dr_v1` senza randomizzazione: serve a misurare quanto guadagna la randomizzazione. |
 | `training_sim_dr_v1_m3` | Training sul Mac (yolo11n-seg, 640 px, 100 epoche). |
 | `training_sim_dr_v1_gpu` | Training su GPU NVIDIA (yolo11s-seg, 200 epoche). |
-| `training_real_finetune_v1` | Fine-tuning sulle foto reali partendo dai pesi sim. Serve il dataset reale. |
+| `sim_dr_v1_rtx3050` | Come `_gpu` con `batch: 8` per la RTX 3050 da 4 GB. Ha prodotto il modello consegnato `sim_dr_v1_rtx3050.pt`. |
+| `training_real_finetune_v1` | Fine-tuning sulle foto reali partendo da `sim_dr_v1_rtx3050.pt`. Serve il dataset reale. |
 
 Chiavi principali di una ricetta dataset:
 
