@@ -5,6 +5,11 @@ decisore. Scritto il 23/09/2026 alla fine della sessione che ha preparato il
 branch `decidi`. Per lo stato aggiornato vale sempre
 [PIANO_LAVORO.md](PIANO_LAVORO.md).
 
+> **Aggiornamento 25/09/2026.** La progettazione del §6 è stata fatta: le
+> decisioni sono in [PROGETTO_DECIDI.md](PROGETTO_DECIDI.md) e le figure in
+> [diagrammi/architettura_progetto.drawio](diagrammi/architettura_progetto.drawio).
+> Le questioni ancora aperte sono al §7 di quel documento.
+
 ---
 
 ## 1. Da leggere prima di tutto
@@ -79,7 +84,7 @@ git push
 | `ComponentBuilder.decider(name)` | `infrastructure/builder.py` | costruisce `random`, `highest`, `immediate_target` |
 | `run_episode(env, decider, seed, on_step)` | `experiments/episode.py` | **unico ciclo** di un episodio; distingue da solo student e teacher |
 | `pipeline_main.py` + `main_pipeline.py` | `experiments/`, radice | main interattivo: scene casuali, passo per passo |
-| `ObservationEncoder` | `observe/encoding.py` | vettore a slot fissi (22 valori per slot + adiacenza N×N, maschera azioni). Concettualmente è di DECIDI: va spostato in `decide/` se lo si usa |
+| `ObservationEncoder` | `decide/encoding.py` | vettore a slot fissi (22 valori per slot + adiacenza N×N, maschera azioni). Spostato da `observe/` il 24/09 |
 | `train_teacher.py` | `experiments/` | training PPO storico |
 
 **Profilo in uso:** `configs/experiments/oracolo.json`, con osservatore

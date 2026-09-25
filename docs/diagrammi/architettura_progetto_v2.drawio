@@ -1,0 +1,455 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram id="architettura_v2" name="1 Architettura">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" page="1" pageScale="1" pageWidth="1720" pageHeight="1120" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="a_title" value="&lt;b&gt;Architettura: responsabilità e confini&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=24;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="25" width="1600" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sub" value="Specifica obiettivo. Il passo operativo è coordinato da ENVIRONMENT; il training usa gli stessi contratti ma resta separato." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="72" width="1600" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="a_runtime" value="" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FAFBFC;strokeColor=#98A2B3;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="135" width="1610" height="535" as="geometry" />
+        </mxCell>
+        <mxCell id="a_runtime_label" value="&lt;b&gt;CICLO OPERATIVO&lt;/b&gt; · simulazione e, con adapter, robot" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=15;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="145" width="580" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="a_env" value="&lt;b&gt;ENVIRONMENT / coordinatore&lt;/b&gt;&lt;br&gt;chiede, inoltra, attende, ricomincia o termina; non sceglie né calcola reward" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#64748B;strokeWidth=1.6;fontColor=#1F2937;fontSize=17;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="510" y="195" width="700" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="a_world" value="&lt;b&gt;MONDO&lt;/b&gt;&lt;br&gt;MuJoCo in simulazione&lt;br&gt;robot + oggetti nel reale" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F7F7F7;strokeColor=#64748B;strokeWidth=1.6;fontColor=#1F2937;fontSize=17;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="370" width="250" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="a_observe" value="&lt;b&gt;OSSERVA&lt;/b&gt;&lt;br&gt;Observation per DECIDI; feedback sensoriale per ESEGUI" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F2FF;strokeColor=#3B82F6;strokeWidth=1.6;fontColor=#1F2937;fontSize=17;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="405" y="370" width="255" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="a_decide" value="&lt;b&gt;DECIDI&lt;/b&gt;&lt;br&gt;sceglie un object_id&lt;br&gt;nessuna skill o traiettoria" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F7E8;strokeColor=#4B9C54;strokeWidth=1.6;fontColor=#1F2937;fontSize=17;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="750" y="370" width="255" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="a_execute" value="&lt;b&gt;ESEGUI&lt;/b&gt;&lt;br&gt;valuta fattibilità, controlla la skill, restituisce fatti" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=17;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1095" y="370" width="255" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="a_settle" value="&lt;b&gt;Assestamento&lt;/b&gt;&lt;br&gt;simulazione / attesa fisica" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F7F7F7;strokeColor=#64748B;strokeWidth=1.6;fontColor=#1F2937;fontSize=17;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="370" width="200" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e1" value="richiede Observation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_env" target="a_observe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e2" value="passa Observation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_env" target="a_decide">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e3" value="passa ObjectDecision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_env" target="a_execute">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e4" value="esito → assesta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_execute" target="a_settle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e5" value="misure" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_world" target="a_observe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e6" value="agisce" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_execute" target="a_world">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1220" y="570" />
+              <mxPoint x="200" y="570" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_e7" value="feedback durante la skill" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#3B82F6;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_observe" target="a_execute">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="545" />
+              <mxPoint x="1060" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_ops_note" value="Linea tratteggiata blu = ciclo interno futuro di ESEGUI: può chiedere molte misure. Non produce una nuova scelta di DECIDI a ogni misura." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="595" width="1520" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sim" value="" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFFAF9;strokeColor=#C96862;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="715" width="1610" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="a_sim_label" value="&lt;b&gt;SOLO SIMULAZIONE / ADDESTRAMENTO&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=15;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="725" width="1000" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="a_oracle" value="&lt;b&gt;OracleObserver&lt;/b&gt;&lt;br&gt;implementazione di OSSERVA; grafo dei supporti ancora da correggere" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F2FF;strokeColor=#3B82F6;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="85" y="790" width="310" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="a_priv" value="&lt;b&gt;PrivilegedState&lt;/b&gt;&lt;br&gt;stato esatto per teacher, TASK e valutazione" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FDECEB;strokeColor=#C96862;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="455" y="790" width="310" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="a_task" value="&lt;b&gt;TASK&lt;/b&gt;&lt;br&gt;reward e terminazione di DECIDI; reward skill di ESEGUI: classe futura" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF8CE;strokeColor=#C5A424;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="825" y="790" width="310" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="a_trainer" value="&lt;b&gt;TRAINER / VALUTAZIONE&lt;/b&gt;&lt;br&gt;PPO, imitazione del teacher e confronti tra policy" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F2EAFE;strokeColor=#9167BB;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1195" y="790" width="385" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e8" value="stato esatto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_oracle" target="a_priv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e9" value="prima / dopo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_priv" target="a_task">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_e10" value="reward" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="a_task" target="a_trainer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a_legend" value="&lt;b&gt;Stato del codice:&lt;/b&gt; pipeline e contratti di base esistono; oggi run_episode collega DECIDI all'environment e ESEGUI fa una rimozione ideale. Ciclo sensoriale, skill e reward skill sono progettati." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1030" width="1550" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="pipeline_v2" name="2 Un passo della pipeline">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" page="1" pageScale="1" pageWidth="1870" pageHeight="1570" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p_title" value="&lt;b&gt;Un passo della pipeline: tre tempi di osservazione&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=24;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="25" width="1750" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p_sub" value="Oₜ = decisione iniziale; Fₜ,ₖ = feedback durante ESEGUI; Oₜ₊₁ = nuova osservazione dopo l'assestamento. Solo Oₜ₊₁ alimenta la prossima decisione." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=15;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="75" width="1750" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="p_before" value="" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F5F9FF;strokeColor=#D8E6F7;strokeWidth=1;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="45" y="225" width="1770" height="175" as="geometry" />
+        </mxCell>
+        <mxCell id="p_choice" value="" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F5FBF4;strokeColor=#DCEEDB;strokeWidth=1;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="45" y="425" width="1770" height="175" as="geometry" />
+        </mxCell>
+        <mxCell id="p_exec" value="" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF9F1;strokeColor=#F1DFC1;strokeWidth=1;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="45" y="625" width="1770" height="365" as="geometry" />
+        </mxCell>
+        <mxCell id="p_after" value="" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F4F8FB;strokeColor=#D7E2EA;strokeWidth=1;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="45" y="1015" width="1770" height="315" as="geometry" />
+        </mxCell>
+        <mxCell id="p_end" value="" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F7F7FC;strokeColor=#DEDBED;strokeWidth=1;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="45" y="1360" width="1770" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="p_head_env" value="&lt;b&gt;ENVIRONMENT&lt;/b&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#64748B;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p_life_env" value="" style="html=1;rounded=0;edgeStyle=none;strokeColor=#CBD5E1;strokeWidth=1;dashed=1;endArrow=none;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="210" as="sourcePoint" />
+            <mxPoint x="160" y="1455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_head_observe" value="&lt;b&gt;OSSERVA&lt;/b&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F2FF;strokeColor=#3B82F6;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="355" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p_life_observe" value="" style="html=1;rounded=0;edgeStyle=none;strokeColor=#CBD5E1;strokeWidth=1;dashed=1;endArrow=none;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="465" y="210" as="sourcePoint" />
+            <mxPoint x="465" y="1455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_head_decide" value="&lt;b&gt;DECIDI&lt;/b&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F7E8;strokeColor=#4B9C54;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="660" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p_life_decide" value="" style="html=1;rounded=0;edgeStyle=none;strokeColor=#CBD5E1;strokeWidth=1;dashed=1;endArrow=none;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="770" y="210" as="sourcePoint" />
+            <mxPoint x="770" y="1455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_head_execute" value="&lt;b&gt;ESEGUI&lt;/b&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="965" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p_life_execute" value="" style="html=1;rounded=0;edgeStyle=none;strokeColor=#CBD5E1;strokeWidth=1;dashed=1;endArrow=none;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1075" y="210" as="sourcePoint" />
+            <mxPoint x="1075" y="1455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_head_world" value="&lt;b&gt;MONDO / SIM&lt;/b&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F7F7F7;strokeColor=#64748B;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p_life_world" value="" style="html=1;rounded=0;edgeStyle=none;strokeColor=#CBD5E1;strokeWidth=1;dashed=1;endArrow=none;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1380" y="210" as="sourcePoint" />
+            <mxPoint x="1380" y="1455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_head_task" value="&lt;b&gt;TASK&lt;/b&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF8CE;strokeColor=#C5A424;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1575" y="150" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p_life_task" value="" style="html=1;rounded=0;edgeStyle=none;strokeColor=#CBD5E1;strokeWidth=1;dashed=1;endArrow=none;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1685" y="210" as="sourcePoint" />
+            <mxPoint x="1685" y="1455" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_before_label" value="&lt;b&gt;A · Scena stabile prima della scelta&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="65" y="230" width="520" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p_1" value="1  osserva scena Sₜ" style="html=1;rounded=0;edgeStyle=none;strokeColor=#3B82F6;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="285" as="sourcePoint" />
+            <mxPoint x="465" y="285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_2" value="2  Oₜ + Pₜ (solo sim.)" style="html=1;rounded=0;edgeStyle=none;strokeColor=#3B82F6;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="465" y="340" as="sourcePoint" />
+            <mxPoint x="160" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_before_note" value="Pₜ = PrivilegedStateₜ. ENVIRONMENT conserva i dati necessari per il confronto finale; lo student vede solo Oₜ." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="270" width="650" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="p_choice_label" value="&lt;b&gt;B · Una sola decisione&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="65" y="430" width="520" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p_3" value="3  Oₜ + contesto decisionale*" style="html=1;rounded=0;edgeStyle=none;strokeColor=#4B9C54;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="485" as="sourcePoint" />
+            <mxPoint x="770" y="485" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_4" value="4  ObjectDecision(object_id)" style="html=1;rounded=0;edgeStyle=none;strokeColor=#4B9C54;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="770" y="540" as="sourcePoint" />
+            <mxPoint x="160" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_choice_note" value="* DecisionContext è previsto, non implementato. Il teacher può ricevere anche Pₜ in simulazione." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="470" width="650" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="p_exec_label" value="&lt;b&gt;C · Tentativo di ESEGUI: ciclo interno futuro, 0…N feedback&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="65" y="630" width="980" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p_5" value="5  esegui ObjectDecision" style="html=1;rounded=0;edgeStyle=none;strokeColor=#D58A1F;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="685" as="sourcePoint" />
+            <mxPoint x="1075" y="685" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_6" value="6a  richiedi Fₜ,ₖ" style="html=1;rounded=0;edgeStyle=none;strokeColor=#3B82F6;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1075" y="745" as="sourcePoint" />
+            <mxPoint x="465" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_7" value="6b  feedback sensoriale Fₜ,ₖ" style="html=1;rounded=0;edgeStyle=none;strokeColor=#3B82F6;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="465" y="795" as="sourcePoint" />
+            <mxPoint x="1075" y="795" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_8" value="6c  comando skill" style="html=1;rounded=0;edgeStyle=none;strokeColor=#D58A1F;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1075" y="845" as="sourcePoint" />
+            <mxPoint x="1380" y="845" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_9" value="6d  effetto / sensori" style="html=1;rounded=0;edgeStyle=none;strokeColor=#64748B;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1380" y="895" as="sourcePoint" />
+            <mxPoint x="1075" y="895" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_10" value="7  fattibilità + ExecutionOutcome" style="html=1;rounded=0;edgeStyle=none;strokeColor=#D58A1F;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1075" y="950" as="sourcePoint" />
+            <mxPoint x="160" y="950" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_loop_note" value="Ripeti 6a–6d finché la skill termina. Fₜ,ₖ serve al controllo di ESEGUI: non è Oₜ₊₁ e non richiama DECIDI." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="712" width="620" height="97" as="geometry" />
+        </mxCell>
+        <mxCell id="p_exec_note" value="Anche un tentativo fallito può muovere la pila; si prosegue sempre con l'assestamento." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="914" width="620" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="p_after_label" value="&lt;b&gt;D · Assesta, riosserva, poi valuta la transizione&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="65" y="1020" width="1050" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p_11" value="8  attendi assestamento" style="html=1;rounded=0;edgeStyle=none;strokeColor=#64748B;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="1075" as="sourcePoint" />
+            <mxPoint x="1380" y="1075" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_12" value="9  osserva Sₜ₊₁" style="html=1;rounded=0;edgeStyle=none;strokeColor=#3B82F6;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="1130" as="sourcePoint" />
+            <mxPoint x="465" y="1130" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_13" value="10  Oₜ₊₁ + Pₜ₊₁ (solo sim.)" style="html=1;rounded=0;edgeStyle=none;strokeColor=#3B82F6;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="465" y="1185" as="sourcePoint" />
+            <mxPoint x="160" y="1185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_14" value="11  prima/dopo + scelta + fattibilità + esito" style="html=1;rounded=0;edgeStyle=none;strokeColor=#C5A424;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="1240" as="sourcePoint" />
+            <mxPoint x="1685" y="1240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_15" value="12  TaskOutcome(reward, terminated, metriche)" style="html=1;rounded=0;edgeStyle=none;strokeColor=#C5A424;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1685" y="1295" as="sourcePoint" />
+            <mxPoint x="160" y="1295" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p_end_text" value="&lt;b&gt;13 · Se continua:&lt;/b&gt; Oₜ₊₁ diventa Oₜ del passo successivo; si aggiorna il contesto e si torna a DECIDI. &lt;b&gt;Solo training:&lt;/b&gt; la transizione va al trainer. &lt;b&gt;Fine:&lt;/b&gt; TASK produce terminated; il limite dei passi può produrre truncated nel wrapper ENVIRONMENT." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=15;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1380" width="1710" height="95" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="reward_v2" name="3 Dati per la reward">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" page="1" pageScale="1" pageWidth="1710" pageHeight="1040" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="r_title" value="&lt;b&gt;Dati per la reward: chi li produce e quando&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=24;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="25" width="1600" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="r_sub" value="TASK giudica una transizione completa. La nuova Observation serve a DECIDI; in simulazione la misura del disturbo usa lo stato vero." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=15;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="75" width="1600" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="r_inputs" value="&lt;b&gt;Input disponibili al termine del passo&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=17;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="160" width="620" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="r_pre" value="&lt;b&gt;Stato prima Sₜ&lt;/b&gt;&lt;br&gt;pose di riferimento e target dopo assestamento precedente" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FDECEB;strokeColor=#C96862;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="225" width="340" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_decision" value="&lt;b&gt;ObjectDecision&lt;/b&gt;&lt;br&gt;object_id richiesto da DECIDI" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F7E8;strokeColor=#4B9C54;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="370" width="340" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_exec" value="&lt;b&gt;Fatti di ESEGUI&lt;/b&gt;&lt;br&gt;oggi: ExecutionOutcome (removed, failure_reason); previsti: FeasibilityAssessment, collisione, tempo, costo" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="515" width="340" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="r_post" value="&lt;b&gt;Stato dopo Sₜ₊₁&lt;/b&gt;&lt;br&gt;pose reali dopo il tentativo e l'assestamento" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FDECEB;strokeColor=#C96862;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="680" width="340" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="r_task" value="&lt;b&gt;TASK · reward di DECIDI&lt;/b&gt;&lt;br&gt;&lt;br&gt;confronta Sₜ e Sₜ₊₁; usa decisione ed esito; calcola disturbo, crollo, target estratto, reward e terminated" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF8CE;strokeColor=#C5A424;strokeWidth=1.6;fontColor=#1F2937;fontSize=17;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="580" y="350" width="445" height="270" as="geometry" />
+        </mxCell>
+        <mxCell id="r_e1" value="prima" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_pre" target="r_task">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_e2" value="scelta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_decision" target="r_task">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_e3" value="fatti" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_exec" target="r_task">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_e4" value="dopo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_post" target="r_task">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_outcome" value="&lt;b&gt;TaskOutcome&lt;/b&gt;&lt;br&gt;reward · terminated · disturbo · crollo · successo" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF8CE;strokeColor=#C5A424;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1195" y="350" width="430" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="r_training" value="&lt;b&gt;Trainer (solo training)&lt;/b&gt;&lt;br&gt;registra Oₜ, azione, reward, Oₜ₊₁ e aggiorna la policy" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F2EAFE;strokeColor=#9167BB;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1195" y="570" width="430" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="r_e5" value="valutazione" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_task" target="r_outcome">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_e6" value="transizione" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="r_outcome" target="r_training">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_future" value="&lt;b&gt;Reward delle skill di ESEGUI · futura classe separata in TASK&lt;/b&gt;&lt;br&gt;Il training delle skill userà i propri stati, feedback e costi nel suo ciclo di addestramento. Non si mescola alla reward strategica di DECIDI; sul robot non serve calcolarla." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F2EAFE;strokeColor=#9167BB;strokeWidth=1.6;fontColor=#1F2937;fontSize=15;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="580" y="785" width="1045" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="r_note" value="&lt;b&gt;Nota sul codice attuale:&lt;/b&gt; TargetExtractionTask misura il massimo spostamento degli oggetti non target rispetto alle pose di riferimento. I campi fattibilità, collisione, durata e costo sono previsti, non implementati." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="950" width="1560" height="55" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="execute_v2" name="4 Dentro ESEGUI">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" page="1" pageScale="1" pageWidth="1720" pageHeight="1130" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="e_title" value="&lt;b&gt;Dentro ESEGUI: fattibilità, feedback e chiusura del tentativo&lt;/b&gt;" style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=24;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="25" width="1600" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sub" value="Diagramma di attività della skill futura. Un ObjectDecision genera un solo tentativo e un ExecutionOutcome, anche se la rimozione fallisce." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=15;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="75" width="1600" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e_start" value="&lt;b&gt;ObjectDecision&lt;/b&gt;&lt;br&gt;object_id" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F7E8;strokeColor=#4B9C54;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="220" width="250" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_feas" value="&lt;b&gt;Valuta fattibilità&lt;/b&gt;&lt;br&gt;accesso, skill disponibile, vincoli di sicurezza" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="410" y="220" width="280" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_no" value="&lt;b&gt;Non eseguibile&lt;/b&gt;&lt;br&gt;nessun tentativo motorio" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="790" y="120" width="300" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_skill" value="&lt;b&gt;Seleziona skill&lt;/b&gt;&lt;br&gt;presa / movimento / rilascio" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="790" y="335" width="300" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_feedback" value="&lt;b&gt;Misura Fₜ,ₖ&lt;/b&gt;&lt;br&gt;feedback operativo da OSSERVA o sensori robot" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#E8F2FF;strokeColor=#3B82F6;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="335" width="350" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_control" value="&lt;b&gt;Calcola comando skill&lt;/b&gt;&lt;br&gt;usa Fₜ,ₖ, comanda il robot e verifica l'effetto" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="530" width="350" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="e_done" value="&lt;b&gt;Fine skill?&lt;/b&gt;&lt;br&gt;successo, errore o arresto" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=1;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="790" y="700" width="300" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_outcome" value="&lt;b&gt;Esito fattuale&lt;/b&gt;&lt;br&gt;fattibilità + ExecutionOutcome senza giudizio strategico" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF0DB;strokeColor=#D58A1F;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="410" y="700" width="280" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_settle" value="&lt;b&gt;ENVIRONMENT&lt;/b&gt;&lt;br&gt;attende assestamento, poi riosserva" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F3F4F6;strokeColor=#64748B;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=center;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="700" width="250" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="e_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_start" target="e_feas">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_2" value="no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_feas" target="e_no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_3" value="sì" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_feas" target="e_skill">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_skill" target="e_feedback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_5" value="Fₜ,ₖ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_feedback" target="e_control">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_control" target="e_done">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_7" value="continua" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=1;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_done" target="e_feedback">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1610" y="755" />
+              <mxPoint x="1610" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_8" value="termina" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_done" target="e_outcome">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_9" value="esito negativo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_no" target="e_outcome">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1110" y="165" />
+              <mxPoint x="1110" y="660" />
+              <mxPoint x="550" y="660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#475569;strokeWidth=2;dashed=0;endArrow=block;endFill=1;fontSize=12;fontColor=#334155;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="e_outcome" target="e_settle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_note" value="&lt;b&gt;Due confini da ricordare&lt;/b&gt;&lt;br&gt;1. I feedback Fₜ,ₖ sono interni alla skill: non avviano DECIDI e non sostituiscono la Observation successiva.&lt;br&gt;2. Dopo qualsiasi esito, anche un fallimento con collisione, ENVIRONMENT lascia assestare e produce Oₜ₊₁; TASK valuta la transizione completa." style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#A8B0BC;strokeWidth=1.6;fontColor=#1F2937;fontSize=16;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="865" width="1470" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="e_now" value="&lt;b&gt;Oggi:&lt;/b&gt; IdealRemovalExecutor rimuove direttamente l'oggetto e restituisce solo object_id, removed e failure_reason. I riquadri tratteggiati descrivono lo sviluppo previsto." style="rounded=0;arcSize=12;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;strokeWidth=0;fontColor=#1F2937;fontSize=14;align=left;verticalAlign=middle;spacing=10;dashed=0;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="1040" width="1490" height="55" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

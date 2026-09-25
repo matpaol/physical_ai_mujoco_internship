@@ -63,6 +63,93 @@ annota il perché *tecnico*: le due cose non vanno confuse.
 
 # Registro
 
+## 2026-09-25 15:00:49 — Documento di progetto di DECIDI
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Branch `decidi`. Solo documentazione. Nuovo `docs/PROGETTO_DECIDI.md`:
+confini dei moduli, ciclo di un passo, contratti (`DecisionInput`,
+`DecisionContext`, `FeasibilityAssessment`, `ExecutionOutcome`), struttura
+interna di DECIDI (encoder con maschera, K = 12 slot, decoder, `reset()`),
+reward attuale, training e valutazione, questioni aperte, ordine di
+implementazione. Aggiornati `docs/PIANO_LAVORO.md` (decisioni, stato, aperti)
+e `docs/HANDOFF_DECIDI.md` (rimando). In testa a `PROGETTO_DECIDI.md`, il
+rimando alle decisioni canoniche D47 e D48 (`software_architecture/02_decisioni.md`
+v22) e la nota che `ObjectDecision` è l'`ObjectPlan` delle regole di
+architettura con lunghezza uno.
+
+**Perché:** la progettazione del 23-25/09 era solo nella chat e nei diagrammi;
+senza un documento testuale la prossima sessione avrebbe dovuto ricostruire
+le scelte, come la maschera solo strutturale, o il perché di `DecisionInput`
+unico e dell'assenza di `remaining_steps`.
+
+**File:** `docs/PROGETTO_DECIDI.md` (nuovo), `docs/PIANO_LAVORO.md`,
+`docs/HANDOFF_DECIDI.md`, `MODIFICHE.md`.
+
+**Verifica:** valori della reward riletti da `task/core.py` e
+`configs/phase_0b/env.json`; troncamento da `envs/__init__.py`.
+
+---
+
+## 2026-09-25 13:45:03 — Suite di diagrammi dell'architettura (draw.io)
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Branch `decidi`. Solo documentazione. `docs/diagrammi/architettura_progetto.drawio`,
+nove pagine, che uniscono la suite di Claude e la `architettura_progetto_v2.drawio`
+di Matteo (lasciata intatta accanto). Dalla v2, corrette: (1) architettura,
+ora con i ritorni verso l'environment, `DecisionInput`, teacher, verso
+MuJoCo → PrivilegedState → OracleObserver e legenda dei colori; (2) un passo
+della pipeline con i tre tempi di osservazione (Oₜ, Fₜ,ₖ, Oₜ₊₁), fase A solo al
+reset; (3) dati per la reward, con la formula e i valori reali; (4) dentro
+ESEGUI, con le decisioni a rombo. Dalla suite di Claude: (5) OSSERVA dentro,
+(6) DECIDI dentro, (7) contratti dati, (8) training e valutazione, (9) il BPMN
+`decidi_pipeline_v6`. Palette unica; bordo tratteggiato = previsto. Due punti
+segnati come "da decidere": chi fornisce Fₜ,ₖ a ESEGUI (OSSERVA o sensori del
+robot) e se l'`ExecutionOutcome` arriva prima o dopo l'assestamento.
+
+**Perché:** Matteo ha chiesto figure per capire struttura e flusso dei dati. Il
+BPMN (`decidi_pipeline_v6`) mostra il processo ma non cosa contengono i dati né
+cosa esiste solo in simulazione. draw.io lascia controllare la disposizione
+(limite di Mermaid) e si apre in VS Code con l'estensione "Draw.io Integration".
+
+**File:** `docs/diagrammi/architettura_progetto.drawio` (nuovo), `MODIFICHE.md`.
+
+**Verifica:** XML valido; nomi di classi e campi controllati su
+`observe/core.py`, `observe/pipeline.py`, `contracts/observation.py`,
+`contracts/core.py`, `task/core.py`; anteprima di ogni pagina controllata per
+sovrapposizioni.
+
+---
+
+## 2026-09-24 15:13:40 — `ObservationEncoder` spostato da OSSERVA a DECIDI
+
+**Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.
+
+**Cosa:** Branch `decidi`. Refactoring senza cambio di comportamento:
+`observe/encoding.py` diventa `decide/encoding.py` (`ObservationEncoder`,
+`EncodedObservation`, `OBJECT_FEATURE_NAMES`). `observe/__init__.py` non li
+esporta piu'; `decide/__init__.py` si'. Aggiornati gli import di
+`envs/target_extraction.py` e `tests/test_sensor_pipeline_completion.py`.
+Riga corrispondente in `docs/HANDOFF_DECIDI.md`.
+
+**Perché:** è lo scostamento n. 1 elencato in `observa.md` v11: il Blocco 5
+esclude che OSSERVA scelga feature per una rete, e `interfaces.md` assegna la
+trasformazione dell'`Observation` a DECIDI. Il decisore student che stiamo per
+scrivere usa l'encoder: tenerlo in `observe/` avrebbe fatto dipendere DECIDI da
+un dettaglio interno di OSSERVA.
+
+**File:** `physical_ai_mujoco/decide/encoding.py` (spostato),
+`physical_ai_mujoco/decide/__init__.py`, `physical_ai_mujoco/observe/__init__.py`,
+`physical_ai_mujoco/envs/target_extraction.py`,
+`tests/test_sensor_pipeline_completion.py`, `docs/HANDOFF_DECIDI.md`, `MODIFICHE.md`.
+
+**Verifica:** nessun altro riferimento a `observe.encoding` nel codice;
+`from physical_ai_mujoco.decide import ObservationEncoder` funziona. Suite
+completa da lanciare sul Mac (`python main_test.py --suite tutti`).
+
+---
+
 ## 2026-09-23 16:37:12 — Documento di passaggio per DECIDI
 
 **Chi:** Claude (claude-opus-5-5, Anthropic), su richiesta di Matteo Paolini.

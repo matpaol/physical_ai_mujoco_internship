@@ -8,6 +8,7 @@ from .core import (
     ImmediateTargetDecider,
     PPODecider,
 )
+from .encoding import EncodedObservation, ObservationEncoder, OBJECT_FEATURE_NAMES
 
 __all__ = [
     "Decider",
@@ -16,4 +17,7 @@ __all__ = [
     "HighestObjectDecider",
     "ImmediateTargetDecider",
     "PPODecider",
+    "EncodedObservation",
+    "ObservationEncoder",
+    "OBJECT_FEATURE_NAMES",
 ]

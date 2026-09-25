@@ -15,7 +15,8 @@ from physical_ai_mujoco.contracts import (
 )
 from physical_ai_mujoco.infrastructure.builder import ComponentBuilder
 from physical_ai_mujoco.infrastructure.builder import PROJECT_ROOT as PROJECT_ROOT
-from physical_ai_mujoco.observe import ExactObserver, ObservationEncoder, SensorObserver
+from physical_ai_mujoco.decide import ObservationEncoder
+from physical_ai_mujoco.observe import ExactObserver, SensorObserver
 from physical_ai_mujoco.sensors import SimulatedStereoCamera
 from physical_ai_mujoco.simulation import SceneSession
 

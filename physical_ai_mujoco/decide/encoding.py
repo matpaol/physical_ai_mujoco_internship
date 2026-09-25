@@ -1,4 +1,8 @@
-"""Codifica a slot fissi dell'Observation per policy vettoriali."""
+"""Fixed-slot encoding of the Observation for vector policies.
+
+It belongs to DECIDE: OBSERVE hands over an algorithm-agnostic Observation,
+and each decision method chooses how to turn it into numbers.
+"""
 
 from __future__ import annotations
 

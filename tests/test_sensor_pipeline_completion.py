@@ -14,7 +14,8 @@ from physical_ai_mujoco.contracts import (
     SceneState,
     UncertaintyState,
 )
-from physical_ai_mujoco.observe import CADMatcher, ObservationEncoder
+from physical_ai_mujoco.decide import ObservationEncoder
+from physical_ai_mujoco.observe import CADMatcher
 from physical_ai_mujoco.observe import SensorObserver
 from physical_ai_mujoco.sensors import (
     ImageDisturbance,
